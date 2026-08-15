@@ -90,6 +90,9 @@ fun BalMandalApp(
 
     if (currentUser == null || currentScreen is Screen.Login) {
         LoginScreen(
+            onLogin = { email, password ->
+                viewModel.login(email, password)
+            },
             onGoogleSignIn = { context ->
                 viewModel.signInWithGoogle(context)
             },

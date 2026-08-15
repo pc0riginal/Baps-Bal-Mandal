@@ -5,7 +5,6 @@ import android.content.Context
 import android.content.ContextWrapper
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -23,16 +22,19 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.Email
+import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Phone
 import androidx.compose.material.icons.filled.VpnKey
+import androidx.compose.material.icons.filled.Visibility
+import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
@@ -52,6 +54,8 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -62,6 +66,7 @@ import com.example.ui.theme.SaffronPrimary
 
 @Composable
 fun LoginScreen(
+    onLogin: (email: String, password: String) -> Unit,
     onGoogleSignIn: (android.content.Context) -> Unit,
     onSendPhoneCode: (android.app.Activity, String) -> Unit,
     onVerifyPhoneCode: (String) -> Unit,
@@ -69,25 +74,19 @@ fun LoginScreen(
     userMessage: String?,
     modifier: Modifier = Modifier
 ) {
-    var phoneNumber by remember { mutableStateOf("+91 ") }
+    var email by remember { mutableStateOf("mahesh.patel@baps.org") }
+    var password by remember { mutableStateOf("swaminarayan123") }
+    var phoneNumber by remember { mutableStateOf("+1") }
     var verificationCode by remember { mutableStateOf("") }
-    var showPhoneAuth by remember { mutableStateOf(false) }
-
+    
+    var isPhoneMode by remember { mutableStateOf(false) }
+    var isPasswordVisible by remember { mutableStateOf(false) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
-    var isLoading by remember { mutableStateOf(false) }
     val context = LocalContext.current
-
+    
     androidx.compose.runtime.LaunchedEffect(userMessage) {
         if (userMessage != null) {
-            isLoading = false
-            if (userMessage.contains("failed", ignoreCase = true) ||
-                userMessage.contains("error", ignoreCase = true) ||
-                userMessage.contains("invalid", ignoreCase = true) ||
-                userMessage.contains("cannot", ignoreCase = true) ||
-                userMessage.contains("expired", ignoreCase = true)
-            ) {
-                errorMessage = userMessage
-            }
+            errorMessage = userMessage
         }
     }
 
@@ -112,33 +111,33 @@ fun LoginScreen(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
-            Spacer(modifier = Modifier.height(32.dp))
+            Spacer(modifier = Modifier.height(24.dp))
 
-            // Divine Emblem
+            // Logo & Divine Emblem
             Box(
                 modifier = Modifier
-                    .size(92.dp)
+                    .size(88.dp)
                     .clip(CircleShape)
                     .background(Color.White.copy(alpha = 0.2f)),
                 contentAlignment = Alignment.Center
             ) {
                 Box(
                     modifier = Modifier
-                        .size(76.dp)
+                        .size(72.dp)
                         .clip(CircleShape)
                         .background(Color.White),
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
                         text = "ॐ",
-                        fontSize = 40.sp,
+                        fontSize = 38.sp,
                         fontWeight = FontWeight.Bold,
                         color = SaffronPrimary
                     )
                 }
             }
 
-            Spacer(modifier = Modifier.height(18.dp))
+            Spacer(modifier = Modifier.height(16.dp))
 
             Text(
                 text = "BAPS Bal Mandal",
@@ -152,176 +151,146 @@ fun LoginScreen(
             Text(
                 text = "Karyakar Management Portal",
                 style = MaterialTheme.typography.bodyMedium.copy(
-                    color = Color.White.copy(alpha = 0.88f)
+                    color = Color.White.copy(alpha = 0.85f)
                 ),
                 textAlign = TextAlign.Center
             )
 
-            Spacer(modifier = Modifier.height(32.dp))
+            Spacer(modifier = Modifier.height(28.dp))
 
-            // Main Auth Card
+            // Login Card
             Card(
                 modifier = Modifier
                     .fillMaxWidth()
                     .testTag("login_card"),
-                shape = RoundedCornerShape(28.dp),
+                shape = RoundedCornerShape(24.dp),
                 colors = CardDefaults.cardColors(containerColor = Color.White),
-                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+                elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
             ) {
                 Column(
                     modifier = Modifier.padding(24.dp),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    if (!showPhoneAuth) {
-                        // --- Single Sign-On (Primary) ---
-                        Text(
-                            text = "Karyakar Sign In",
-                            style = MaterialTheme.typography.titleMedium.copy(
-                                fontWeight = FontWeight.Bold,
-                                color = NavySecondary
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        OutlinedButton(
+                            onClick = { isPhoneMode = false; errorMessage = null },
+                            modifier = Modifier.weight(1f),
+                            shape = RoundedCornerShape(12.dp),
+                            colors = ButtonDefaults.outlinedButtonColors(contentColor = if (!isPhoneMode) SaffronPrimary else Color.Gray),
+                            border = BorderStroke(1.dp, if (!isPhoneMode) SaffronPrimary else BorderSubtleLight)
+                        ) {
+                            Text("Email", fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                        }
+                        OutlinedButton(
+                            onClick = { isPhoneMode = true; errorMessage = null },
+                            modifier = Modifier.weight(1f),
+                            shape = RoundedCornerShape(12.dp),
+                            colors = ButtonDefaults.outlinedButtonColors(contentColor = if (isPhoneMode) SaffronPrimary else Color.Gray),
+                            border = BorderStroke(1.dp, if (isPhoneMode) SaffronPrimary else BorderSubtleLight)
+                        ) {
+                            Text("Phone", fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    if (!isPhoneMode) {
+                        OutlinedTextField(
+                            value = email,
+                            onValueChange = {
+                                email = it
+                                errorMessage = null
+                            },
+                            label = { Text("Karyakar Email") },
+                            leadingIcon = {
+                                Icon(Icons.Default.Email, contentDescription = null, tint = SaffronPrimary)
+                            },
+                            singleLine = true,
+                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = RoundedCornerShape(14.dp),
+                            colors = OutlinedTextFieldDefaults.colors(
+                                focusedBorderColor = SaffronPrimary,
+                                unfocusedBorderColor = BorderSubtleLight.copy(alpha = 0.5f)
                             )
                         )
-                        Text(
-                            text = "Sign in securely with your authorized BAPS Google account",
-                            style = MaterialTheme.typography.bodySmall.copy(
-                                color = Color.Gray,
-                                textAlign = TextAlign.Center
-                            ),
-                            modifier = Modifier.padding(top = 4.dp, bottom = 24.dp)
-                        )
 
-                        // Google SSO Button
-                        Button(
-                            onClick = {
+                        Spacer(modifier = Modifier.height(12.dp))
+
+                        OutlinedTextField(
+                            value = password,
+                            onValueChange = {
+                                password = it
                                 errorMessage = null
-                                isLoading = true
-                                onGoogleSignIn(context)
                             },
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(52.dp)
-                                .testTag("button_google_signin"),
-                            shape = RoundedCornerShape(16.dp),
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor = SaffronPrimary,
-                                contentColor = Color.White
-                            ),
-                            elevation = ButtonDefaults.buttonElevation(defaultElevation = 2.dp)
-                        ) {
-                            if (isLoading) {
-                                CircularProgressIndicator(
-                                    modifier = Modifier.size(22.dp),
-                                    color = Color.White,
-                                    strokeWidth = 2.dp
-                                )
-                            } else {
-                                Row(
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    horizontalArrangement = Arrangement.Center
-                                ) {
-                                    Text(
-                                        text = "G",
-                                        fontWeight = FontWeight.Black,
-                                        fontSize = 20.sp,
-                                        color = Color.White
-                                    )
-                                    Spacer(modifier = Modifier.width(12.dp))
-                                    Text(
-                                        text = "Continue with Google SSO",
-                                        style = MaterialTheme.typography.titleMedium.copy(
-                                            fontWeight = FontWeight.Bold,
-                                            color = Color.White
-                                        )
+                            label = { Text("Password") },
+                            leadingIcon = {
+                                Icon(Icons.Default.Lock, contentDescription = null, tint = SaffronPrimary)
+                            },
+                            trailingIcon = {
+                                IconButton(onClick = { isPasswordVisible = !isPasswordVisible }) {
+                                    Icon(
+                                        imageVector = if (isPasswordVisible) Icons.Default.VisibilityOff else Icons.Default.Visibility,
+                                        contentDescription = if (isPasswordVisible) "Hide password" else "Show password"
                                     )
                                 }
-                            }
-                        }
-
-                        Spacer(modifier = Modifier.height(20.dp))
-
-                        Row(
+                            },
+                            visualTransformation = if (isPasswordVisible) VisualTransformation.None else PasswordVisualTransformation(),
+                            singleLine = true,
+                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
                             modifier = Modifier.fillMaxWidth(),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            HorizontalDivider(modifier = Modifier.weight(1f), color = BorderSubtleLight)
-                            Text(
-                                text = "OR",
-                                style = MaterialTheme.typography.labelSmall.copy(color = Color.Gray),
-                                modifier = Modifier.padding(horizontal = 12.dp)
+                            shape = RoundedCornerShape(14.dp),
+                            colors = OutlinedTextFieldDefaults.colors(
+                                focusedBorderColor = SaffronPrimary,
+                                unfocusedBorderColor = BorderSubtleLight.copy(alpha = 0.5f)
                             )
-                            HorizontalDivider(modifier = Modifier.weight(1f), color = BorderSubtleLight)
+                        )
+
+                        if (errorMessage != null) {
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Text(
+                                text = errorMessage ?: "",
+                                color = MaterialTheme.colorScheme.error,
+                                style = MaterialTheme.typography.bodySmall
+                            )
                         }
 
                         Spacer(modifier = Modifier.height(20.dp))
 
-                        // Switch to Phone OTP button
-                        OutlinedButton(
+                        Button(
                             onClick = {
-                                showPhoneAuth = true
-                                errorMessage = null
+                                if (email.isBlank() || password.isBlank()) {
+                                    errorMessage = "Please enter both email and password"
+                                } else {
+                                    onLogin(email, password)
+                                }
                             },
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .height(48.dp)
-                                .testTag("button_phone_signin_mode"),
+                                .height(48.dp),
                             shape = RoundedCornerShape(16.dp),
-                            border = BorderStroke(1.dp, SaffronPrimary.copy(alpha = 0.6f)),
-                            colors = ButtonDefaults.outlinedButtonColors(contentColor = SaffronPrimary)
+                            colors = ButtonDefaults.buttonColors(containerColor = SaffronPrimary)
                         ) {
-                            Icon(Icons.Default.Phone, contentDescription = null, modifier = Modifier.size(18.dp))
-                            Spacer(modifier = Modifier.width(8.dp))
                             Text(
-                                text = "Sign In with Phone OTP",
+                                text = "Sign In with Email",
                                 style = MaterialTheme.typography.titleMedium.copy(
-                                    fontWeight = FontWeight.SemiBold
+                                    fontWeight = FontWeight.Bold,
+                                    color = Color.White
                                 )
                             )
                         }
                     } else {
-                        // --- Phone Number + OTP Mode ---
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.ArrowBack,
-                                contentDescription = "Back",
-                                tint = SaffronPrimary,
-                                modifier = Modifier
-                                    .size(24.dp)
-                                    .clickable {
-                                        showPhoneAuth = false
-                                        errorMessage = null
-                                    }
-                            )
-                            Spacer(modifier = Modifier.width(8.dp))
-                            Text(
-                                text = if (verificationId == null) "Phone OTP Login" else "Enter Verification Code",
-                                style = MaterialTheme.typography.titleMedium.copy(
-                                    fontWeight = FontWeight.Bold,
-                                    color = NavySecondary
-                                )
-                            )
-                        }
-
-                        Spacer(modifier = Modifier.height(16.dp))
-
                         if (verificationId == null) {
-                            Text(
-                                text = "Enter your registered karyakar mobile number with country code (e.g. +91 or +1)",
-                                style = MaterialTheme.typography.bodySmall.copy(color = Color.Gray),
-                                modifier = Modifier.fillMaxWidth()
-                            )
-
-                            Spacer(modifier = Modifier.height(16.dp))
-
                             OutlinedTextField(
                                 value = phoneNumber,
                                 onValueChange = {
                                     phoneNumber = it
                                     errorMessage = null
                                 },
-                                label = { Text("Mobile Number") },
+                                label = { Text("Phone Number (+1...)") },
                                 leadingIcon = {
                                     Icon(Icons.Default.Phone, contentDescription = null, tint = SaffronPrimary)
                                 },
@@ -334,55 +303,33 @@ fun LoginScreen(
                                     unfocusedBorderColor = BorderSubtleLight.copy(alpha = 0.5f)
                                 )
                             )
-
                             Spacer(modifier = Modifier.height(20.dp))
-
                             Button(
                                 onClick = {
-                                    if (phoneNumber.trim().length < 6) {
-                                        errorMessage = "Please enter a valid mobile number with country code"
+                                    if (phoneNumber.isBlank()) {
+                                        errorMessage = "Please enter a valid phone number"
                                     } else {
                                         val activity = context.findActivity()
                                         if (activity != null) {
-                                            errorMessage = null
-                                            isLoading = true
-                                            onSendPhoneCode(activity, phoneNumber.trim())
+                                            onSendPhoneCode(activity, phoneNumber)
                                         } else {
-                                            errorMessage = "Activity not found to send SMS code."
+                                            errorMessage = "Cannot send code: Activity not found."
                                         }
                                     }
                                 },
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .height(48.dp),
+                                modifier = Modifier.fillMaxWidth().height(48.dp),
                                 shape = RoundedCornerShape(16.dp),
                                 colors = ButtonDefaults.buttonColors(containerColor = SaffronPrimary)
                             ) {
-                                if (isLoading) {
-                                    CircularProgressIndicator(
-                                        modifier = Modifier.size(20.dp),
-                                        color = Color.White,
-                                        strokeWidth = 2.dp
+                                Text(
+                                    text = "Send SMS Code",
+                                    style = MaterialTheme.typography.titleMedium.copy(
+                                        fontWeight = FontWeight.Bold,
+                                        color = Color.White
                                     )
-                                } else {
-                                    Text(
-                                        text = "Send SMS OTP",
-                                        style = MaterialTheme.typography.titleMedium.copy(
-                                            fontWeight = FontWeight.Bold,
-                                            color = Color.White
-                                        )
-                                    )
-                                }
+                                )
                             }
                         } else {
-                            Text(
-                                text = "A 6-digit verification code was sent to $phoneNumber",
-                                style = MaterialTheme.typography.bodySmall.copy(color = Color.Gray),
-                                modifier = Modifier.fillMaxWidth()
-                            )
-
-                            Spacer(modifier = Modifier.height(16.dp))
-
                             OutlinedTextField(
                                 value = verificationCode,
                                 onValueChange = {
@@ -402,63 +349,59 @@ fun LoginScreen(
                                     unfocusedBorderColor = BorderSubtleLight.copy(alpha = 0.5f)
                                 )
                             )
-
                             Spacer(modifier = Modifier.height(20.dp))
-
                             Button(
                                 onClick = {
                                     if (verificationCode.isBlank()) {
-                                        errorMessage = "Please enter the 6-digit code"
+                                        errorMessage = "Please enter the code"
                                     } else {
-                                        errorMessage = null
-                                        isLoading = true
-                                        onVerifyPhoneCode(verificationCode.trim())
+                                        onVerifyPhoneCode(verificationCode)
                                     }
                                 },
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .height(48.dp),
+                                modifier = Modifier.fillMaxWidth().height(48.dp),
                                 shape = RoundedCornerShape(16.dp),
                                 colors = ButtonDefaults.buttonColors(containerColor = SaffronPrimary)
                             ) {
-                                if (isLoading) {
-                                    CircularProgressIndicator(
-                                        modifier = Modifier.size(20.dp),
-                                        color = Color.White,
-                                        strokeWidth = 2.dp
+                                Text(
+                                    text = "Verify & Sign In",
+                                    style = MaterialTheme.typography.titleMedium.copy(
+                                        fontWeight = FontWeight.Bold,
+                                        color = Color.White
                                     )
-                                } else {
-                                    Text(
-                                        text = "Verify OTP & Sign In",
-                                        style = MaterialTheme.typography.titleMedium.copy(
-                                            fontWeight = FontWeight.Bold,
-                                            color = Color.White
-                                        )
-                                    )
-                                }
+                                )
                             }
                         }
                     }
 
-                    if (errorMessage != null) {
-                        Spacer(modifier = Modifier.height(12.dp))
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Text(text = "OR", style = MaterialTheme.typography.labelSmall.copy(color = Color.Gray))
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    OutlinedButton(
+                        onClick = { onGoogleSignIn(context) },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(48.dp),
+                        shape = RoundedCornerShape(16.dp),
+                        border = BorderStroke(1.dp, SaffronPrimary.copy(alpha = 0.5f))
+                    ) {
                         Text(
-                            text = errorMessage ?: "",
-                            color = MaterialTheme.colorScheme.error,
-                            style = MaterialTheme.typography.bodySmall,
-                            textAlign = TextAlign.Center,
-                            modifier = Modifier.fillMaxWidth()
+                            text = "Sign In with Google",
+                            style = MaterialTheme.typography.titleMedium.copy(
+                                fontWeight = FontWeight.Bold,
+                                color = SaffronPrimary
+                            )
                         )
                     }
                 }
             }
 
-            Spacer(modifier = Modifier.height(28.dp))
+            Spacer(modifier = Modifier.height(24.dp))
 
             Text(
                 text = "BAPS Swaminarayan Sanstha • Bal Pravrutti",
                 style = MaterialTheme.typography.labelSmall.copy(
-                    color = Color.White.copy(alpha = 0.75f),
+                    color = Color.White.copy(alpha = 0.7f),
                     fontSize = 11.sp
                 )
             )

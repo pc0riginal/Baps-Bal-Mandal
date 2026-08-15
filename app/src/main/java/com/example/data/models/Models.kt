@@ -1,9 +1,5 @@
 package com.example.data.models
 
-import com.google.firebase.firestore.Exclude
-import com.google.firebase.firestore.IgnoreExtraProperties
-
-@IgnoreExtraProperties
 data class UserProfile(
     val uid: String = "",
     val name: String = "",
@@ -14,11 +10,9 @@ data class UserProfile(
     val mandalName: String = "BAPS Bal Mandal - Ahmedabad West",
     val active: Boolean = true
 ) {
-    @get:Exclude
     val isAdmin: Boolean get() = role.equals("admin", ignoreCase = true)
 }
 
-@IgnoreExtraProperties
 data class Balak(
     val id: String = "",
     val firstName: String = "",
@@ -44,10 +38,7 @@ data class Balak(
     val createdAt: Long = System.currentTimeMillis(),
     val updatedAt: Long = System.currentTimeMillis()
 ) {
-    @get:Exclude
     val fullName: String get() = if (firstName.isNotBlank()) "$firstName $lastName".trim() else "Balak"
-
-    @get:Exclude
     val balakIdFormatted: String get() = "BAL-${id.takeLast(4).padStart(4, '0')}"
 }
 
@@ -64,7 +55,6 @@ enum class AttendanceStatus(val value: String, val label: String) {
     }
 }
 
-@IgnoreExtraProperties
 data class AttendanceRecord(
     val id: String = "",
     val balakId: String = "",
@@ -78,7 +68,6 @@ data class AttendanceRecord(
     val mandalId: String = "mandal-001"
 )
 
-@IgnoreExtraProperties
 data class SabhaSession(
     val id: String = "",
     val title: String = "Weekly Bal Sabha",
@@ -94,7 +83,6 @@ data class SabhaSession(
     val isCompleted: Boolean = false
 )
 
-@IgnoreExtraProperties
 data class MandalActivity(
     val id: String = "",
     val name: String = "",
@@ -106,7 +94,6 @@ data class MandalActivity(
     val mandalId: String = "mandal-001"
 )
 
-@IgnoreExtraProperties
 data class Karyakar(
     val id: String = "",
     val name: String = "",

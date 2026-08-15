@@ -1,29 +1,40 @@
 import re
 
-with open('/app/src/main/java/com/example/data/repository/BalMandalRepository.kt', 'r') as f:
+with open('app/src/main/java/com/example/data/repository/BalMandalRepository.kt', 'r') as f:
     content = f.read()
 
-new_methods = """
-    fun signInWithGoogle(idToken: String, onComplete: (Boolean, String?) -> Unit) {
-        val credential = com.google.firebase.auth.GoogleAuthProvider.getCredential(idToken, null)
-        signInWithCredential(credential, onComplete)
-    }
+attendance_old = """        batch.commit()
+        
+        // Also update Sabha session summary"""
 
-    fun signInWithCredential(credential: com.google.firebase.auth.AuthCredential, onComplete: (Boolean, String?) -> Unit) {
-        auth?.signInWithCredential(credential)
-            ?.addOnCompleteListener { task ->
-                if (task.isSuccessful) {
-                    onComplete(true, null)
-                } else {
-                    onComplete(false, task.exception?.message ?: "Login failed")
-                }
-            } ?: onComplete(false, "Firebase not initialized. Add google-services.json via Secrets.")
-    }
+attendance_new = """        batch.commit().addOnFailureListener { Log.e("Repo", "Failed to commit attendance", it) }
+        
+        // Optimistic update of attendance records
+        val newRecords = mutableListOf<AttendanceRecord>()
+        for ((balakId, status) in statusMap) {
+            val note = notesMap[balakId] ?: ""
+            val id = "att-${date}-${balakId}"
+            val record = AttendanceRecord(
+                id = id,
+                balakId = balakId,
+                sabhaId = sabhaId,
+                date = date,
+                status = status.name,
+                note = note,
+                markedAt = System.currentTimeMillis(),
+                markedBy = markedByName,
+                mandalId = mandalId
+            )
+            newRecords.add(record)
+        }
+        val currentRecords = _attendanceRecords.value.filter { it.date != date }.toMutableList()
+        currentRecords.addAll(newRecords)
+        _attendanceRecords.value = currentRecords
 
-    fun login(email: String, password: String, onComplete: (Boolean, String?) -> Unit) {
-"""
+        // Also update Sabha session summary"""
 
-content = content.replace("    fun login(email: String, password: String, onComplete: (Boolean, String?) -> Unit) {", new_methods)
+content = content.replace(attendance_old, attendance_new)
 
-with open('/app/src/main/java/com/example/data/repository/BalMandalRepository.kt', 'w') as f:
+with open('app/src/main/java/com/example/data/repository/BalMandalRepository.kt', 'w') as f:
     f.write(content)
+print("Patched attendance")
