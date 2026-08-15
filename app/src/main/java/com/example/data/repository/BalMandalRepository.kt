@@ -43,6 +43,19 @@ class BalMandalRepository private constructor() {
 
     private val activeListeners = mutableListOf<ListenerRegistration>()
 
+    companion object {
+        const val OWNER_ADMIN_EMAIL = "pc.pramukh99@gmail.com"
+
+        @Volatile
+        private var instance: BalMandalRepository? = null
+
+        fun getInstance(): BalMandalRepository {
+            return instance ?: synchronized(this) {
+                instance ?: BalMandalRepository().also { instance = it }
+            }
+        }
+    }
+
     init {
         try {
             val existingUser = auth?.currentUser
@@ -68,7 +81,13 @@ class BalMandalRepository private constructor() {
         }
     }
 
+    private fun isOwnerUser(email: String?): Boolean {
+        if (email.isNullOrBlank()) return false
+        return email.trim().equals(OWNER_ADMIN_EMAIL, ignoreCase = true)
+    }
+
     private fun createDefaultUserProfile(user: FirebaseUser): UserProfile {
+        val isOwner = isOwnerUser(user.email)
         val name = when {
             !user.displayName.isNullOrBlank() -> user.displayName!!
             !user.email.isNullOrBlank() -> user.email!!.substringBefore("@").replace(".", " ").capitalizeWords()
@@ -81,7 +100,7 @@ class BalMandalRepository private constructor() {
             name = name,
             email = user.email ?: "",
             phone = user.phoneNumber ?: "",
-            role = "karyakar",
+            role = if (isOwner) "admin" else "karyakar",
             mandalId = generatedMandalId,
             mandalName = "",
             mandalCity = "",
@@ -91,6 +110,7 @@ class BalMandalRepository private constructor() {
     }
 
     private fun fetchUserProfileAndStartListeners(user: FirebaseUser) {
+        val isOwner = isOwnerUser(user.email)
         val defaultProfile = _currentUser.value ?: createDefaultUserProfile(user)
         val fs = firestore
         if (fs == null) {
@@ -103,8 +123,10 @@ class BalMandalRepository private constructor() {
                 if (doc != null && doc.exists()) {
                     val profile = doc.toObject(UserProfile::class.java)
                     if (profile != null) {
-                        _currentUser.value = profile
-                        if (profile.isProfileComplete) {
+                        // DB owner is always guaranteed Admin role
+                        val effectiveProfile = if (isOwner) profile.copy(role = "admin", active = true) else profile
+                        _currentUser.value = effectiveProfile
+                        if (effectiveProfile.isProfileComplete && effectiveProfile.active) {
                             startListeners()
                         }
                     }
@@ -119,7 +141,9 @@ class BalMandalRepository private constructor() {
     }
 
     fun updateUserProfile(profile: UserProfile, onComplete: ((Boolean, String?) -> Unit)? = null) {
-        val updated = profile.copy(isProfileComplete = true)
+        val isOwner = isOwnerUser(profile.email)
+        val role = if (isOwner) "admin" else profile.role
+        val updated = profile.copy(role = role, isProfileComplete = true)
         _currentUser.value = updated
 
         val fs = firestore
@@ -127,6 +151,20 @@ class BalMandalRepository private constructor() {
             fs.collection("users").document(updated.uid).set(updated)
                 .addOnSuccessListener {
                     Log.d("BalMandalRepo", "User profile updated successfully")
+                    // Also register / sync in karyakars collection
+                    val karyakarDoc = Karyakar(
+                        id = updated.uid,
+                        name = updated.name,
+                        email = updated.email,
+                        phone = updated.phone,
+                        role = if (updated.isAdmin) "Sanchalak (Admin)" else "Bal Mandal Karyakar",
+                        mandalId = updated.mandalId,
+                        mandalName = updated.mandalName,
+                        active = updated.active,
+                        responsibilities = "Bal Mandal Management"
+                    )
+                    fs.collection("karyakars").document(updated.uid).set(karyakarDoc)
+
                     startListeners()
                     onComplete?.invoke(true, null)
                 }
@@ -144,10 +182,13 @@ class BalMandalRepository private constructor() {
     private fun startListeners() {
         stopListeners()
         val fs = firestore ?: return
-        val mandalId = _currentUser.value?.mandalId ?: return
+        val user = _currentUser.value ?: return
+
+        // If user is deactivated, do not stream data
+        if (!user.active) return
 
         try {
-            // 1. Balaks: Listen to collection for user's mandal
+            // 1. Balaks: Listen to collection
             val balakReg = fs.collection("balaks")
                 .addSnapshotListener { snapshot, e ->
                     if (e != null) {
@@ -156,8 +197,7 @@ class BalMandalRepository private constructor() {
                     }
                     if (snapshot != null) {
                         val remoteList = snapshot.toObjects(Balak::class.java)
-                        val matching = remoteList.filter { it.mandalId.isBlank() || it.mandalId == mandalId }
-                        _balaks.value = if (matching.isNotEmpty()) matching else remoteList
+                        _balaks.value = remoteList
                     }
                 }
             activeListeners.add(balakReg)
@@ -171,8 +211,7 @@ class BalMandalRepository private constructor() {
                     }
                     if (snapshot != null) {
                         val list = snapshot.toObjects(AttendanceRecord::class.java)
-                        val matching = list.filter { it.mandalId.isBlank() || it.mandalId == mandalId }
-                        _attendanceRecords.value = if (matching.isNotEmpty()) matching else list
+                        _attendanceRecords.value = list
                     }
                 }
             activeListeners.add(attReg)
@@ -186,8 +225,7 @@ class BalMandalRepository private constructor() {
                     }
                     if (snapshot != null) {
                         val list = snapshot.toObjects(SabhaSession::class.java).sortedByDescending { it.date }
-                        val matching = list.filter { it.mandalId.isBlank() || it.mandalId == mandalId }
-                        _sabhas.value = if (matching.isNotEmpty()) matching else list
+                        _sabhas.value = list
                     }
                 }
             activeListeners.add(sabhaReg)
@@ -201,8 +239,7 @@ class BalMandalRepository private constructor() {
                     }
                     if (snapshot != null) {
                         val list = snapshot.toObjects(MandalActivity::class.java).sortedByDescending { it.date }
-                        val matching = list.filter { it.mandalId.isBlank() || it.mandalId == mandalId }
-                        _activities.value = if (matching.isNotEmpty()) matching else list
+                        _activities.value = list
                     }
                 }
             activeListeners.add(actReg)
@@ -216,8 +253,7 @@ class BalMandalRepository private constructor() {
                     }
                     if (snapshot != null) {
                         val list = snapshot.toObjects(Karyakar::class.java)
-                        val matching = list.filter { it.mandalId.isBlank() || it.mandalId == mandalId }
-                        _karyakars.value = if (matching.isNotEmpty()) matching else list
+                        _karyakars.value = list
                     }
                 }
             activeListeners.add(karyakarReg)
@@ -278,7 +314,7 @@ class BalMandalRepository private constructor() {
         stopListeners()
     }
 
-    // --- Balak Management (Write to DB & Update Local State) ---
+    // --- Balak Management ---
 
     fun addBalak(balak: Balak): String {
         val newId = if (balak.id.isNotBlank()) balak.id else "bal-${UUID.randomUUID().toString().take(8)}"
@@ -296,11 +332,9 @@ class BalMandalRepository private constructor() {
             assignedKaryakar = karyakar
         )
 
-        // 1. Immediate local update
         val current = _balaks.value.filter { it.id != newId }
         _balaks.value = current + newBalak
 
-        // 2. Persist to Firestore DB
         firestore?.collection("balaks")?.document(newId)?.set(newBalak)
             ?.addOnSuccessListener { Log.d("BalMandalRepo", "Balak $newId added to Firestore") }
             ?.addOnFailureListener { e -> Log.e("BalMandalRepo", "Failed to add balak $newId", e) }
@@ -311,7 +345,6 @@ class BalMandalRepository private constructor() {
     fun updateBalak(updatedBalak: Balak) {
         val withTimestamp = updatedBalak.copy(updatedAt = System.currentTimeMillis())
 
-        // 1. Immediate local update
         val current = _balaks.value.toMutableList()
         val idx = current.indexOfFirst { it.id == withTimestamp.id }
         if (idx >= 0) {
@@ -321,7 +354,6 @@ class BalMandalRepository private constructor() {
         }
         _balaks.value = current
 
-        // 2. Persist update to Firestore DB
         firestore?.collection("balaks")?.document(withTimestamp.id)?.set(withTimestamp)
             ?.addOnSuccessListener { Log.d("BalMandalRepo", "Balak ${withTimestamp.id} updated") }
             ?.addOnFailureListener { e -> Log.e("BalMandalRepo", "Failed to update balak ${withTimestamp.id}", e) }
@@ -334,10 +366,8 @@ class BalMandalRepository private constructor() {
     }
 
     fun deleteBalak(balakId: String) {
-        // 1. Immediate local removal
         _balaks.value = _balaks.value.filter { it.id != balakId }
 
-        // 2. Delete from Firestore DB
         firestore?.collection("balaks")?.document(balakId)?.delete()
             ?.addOnSuccessListener { Log.d("BalMandalRepo", "Balak $balakId deleted") }
             ?.addOnFailureListener { e -> Log.e("BalMandalRepo", "Failed to delete balak $balakId", e) }
@@ -387,7 +417,6 @@ class BalMandalRepository private constructor() {
             if (status == AttendanceStatus.ABSENT) absentCount++
         }
 
-        // 1. Local update
         val existingFiltered = _attendanceRecords.value.filter { it.date != date }
         _attendanceRecords.value = existingFiltered + newRecords
 
@@ -403,7 +432,6 @@ class BalMandalRepository private constructor() {
         sabhasList.add(0, updatedSabha)
         _sabhas.value = sabhasList
 
-        // 2. Persist batch to Firestore DB
         val fs = firestore ?: return
         try {
             val batch = fs.batch()
@@ -490,7 +518,7 @@ class BalMandalRepository private constructor() {
             ?.addOnFailureListener { e -> Log.e("BalMandalRepo", "Failed to add activity in DB", e) }
     }
 
-    // --- Karyakars ---
+    // --- Karyakars (Admin Only Operations) ---
 
     fun addKaryakar(karyakar: Karyakar) {
         val newId = if (karyakar.id.isNotBlank()) karyakar.id else "k-${UUID.randomUUID().toString().take(8)}"
@@ -512,19 +540,14 @@ class BalMandalRepository private constructor() {
         if (idx >= 0) current[idx] = updated
         _karyakars.value = current
 
-        firestore?.collection("karyakars")?.document(karyakarId)?.update("active", updated.active)
-            ?.addOnFailureListener { e -> Log.e("BalMandalRepo", "Failed to update karyakar in DB", e) }
-    }
+        val fs = firestore ?: return
+        // Update karyakars collection
+        fs.collection("karyakars").document(karyakarId).update("active", updated.active)
+            .addOnFailureListener { e -> Log.e("BalMandalRepo", "Failed to update karyakar in DB", e) }
 
-    companion object {
-        @Volatile
-        private var instance: BalMandalRepository? = null
-
-        fun getInstance(): BalMandalRepository {
-            return instance ?: synchronized(this) {
-                instance ?: BalMandalRepository().also { instance = it }
-            }
-        }
+        // Also update users collection if the ID matches user's UID
+        fs.collection("users").document(karyakarId).update("active", updated.active)
+            .addOnFailureListener { e -> Log.w("BalMandalRepo", "User doc may not exist with same ID", e) }
     }
 }
 

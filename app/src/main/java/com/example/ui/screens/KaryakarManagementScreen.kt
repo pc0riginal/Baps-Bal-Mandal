@@ -3,7 +3,9 @@ package com.example.ui.screens
 import android.content.Intent
 import android.net.Uri
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -19,7 +21,9 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Phone
+import androidx.compose.material.icons.filled.Shield
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -56,6 +60,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.data.models.Karyakar
+import com.example.data.models.UserProfile
 import com.example.ui.components.BalakAvatar
 import com.example.ui.theme.BorderSubtleLight
 import com.example.ui.theme.NavySecondary
@@ -66,6 +71,7 @@ import com.example.ui.theme.SaffronPrimary
 @Composable
 fun KaryakarManagementScreen(
     karyakars: List<Karyakar>,
+    currentUser: UserProfile?,
     onAddKaryakar: (Karyakar) -> Unit,
     onToggleKaryakarActive: (String) -> Unit,
     isGujarati: Boolean,
@@ -73,17 +79,20 @@ fun KaryakarManagementScreen(
 ) {
     val context = LocalContext.current
     var showAddDialog by remember { mutableStateOf(false) }
+    val isAdmin = currentUser?.isAdmin == true
 
     Scaffold(
         floatingActionButton = {
-            FloatingActionButton(
-                onClick = { showAddDialog = true },
-                containerColor = SaffronPrimary,
-                contentColor = Color.White,
-                shape = CircleShape,
-                modifier = Modifier.testTag("fab_add_karyakar")
-            ) {
-                Icon(Icons.Default.Add, contentDescription = "Add Karyakar")
+            if (isAdmin) {
+                FloatingActionButton(
+                    onClick = { showAddDialog = true },
+                    containerColor = SaffronPrimary,
+                    contentColor = Color.White,
+                    shape = CircleShape,
+                    modifier = Modifier.testTag("fab_add_karyakar")
+                ) {
+                    Icon(Icons.Default.Add, contentDescription = "Add Karyakar")
+                }
             }
         },
         modifier = modifier.fillMaxSize()
@@ -117,93 +126,168 @@ fun KaryakarManagementScreen(
                 style = MaterialTheme.typography.bodySmall.copy(color = MaterialTheme.colorScheme.onSurfaceVariant)
             )
 
+            if (!isAdmin) {
+                Spacer(modifier = Modifier.height(8.dp))
+                Surface(
+                    shape = RoundedCornerShape(12.dp),
+                    color = SaffronPrimary.copy(alpha = 0.08f),
+                    border = BorderStroke(1.dp, SaffronPrimary.copy(alpha = 0.2f))
+                ) {
+                    Row(
+                        modifier = Modifier.padding(10.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(Icons.Default.Lock, contentDescription = null, tint = SaffronPrimary, modifier = Modifier.size(16.dp))
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = "Only the Mandal Admin (Database Owner) has permission to activate or deactivate karyakars.",
+                            style = MaterialTheme.typography.bodySmall.copy(fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurface)
+                        )
+                    }
+                }
+            }
+
             Spacer(modifier = Modifier.height(14.dp))
 
-            LazyColumn(
-                modifier = Modifier.fillMaxSize(),
-                verticalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                items(karyakars) { karyakar ->
-                    Card(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .testTag("karyakar_card_${karyakar.id}"),
-                        shape = RoundedCornerShape(20.dp),
-                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-                        border = BorderStroke(1.dp, BorderSubtleLight.copy(alpha = 0.35f)),
-                        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
-                    ) {
-                        Column(modifier = Modifier.padding(16.dp)) {
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                BalakAvatar(name = karyakar.name, size = 44)
-                                Spacer(modifier = Modifier.width(12.dp))
+            if (karyakars.isEmpty()) {
+                Box(
+                    modifier = Modifier.fillMaxSize().padding(32.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Icon(
+                            imageVector = Icons.Default.Shield,
+                            contentDescription = null,
+                            tint = BorderSubtleLight,
+                            modifier = Modifier.size(48.dp)
+                        )
+                        Spacer(modifier = Modifier.height(12.dp))
+                        Text(
+                            text = "No Karyakars Registered Yet",
+                            style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold)
+                        )
+                        Text(
+                            text = if (isAdmin) "Tap '+' below to add karyakar members to your team." else "Karyakars will appear once added by Admin.",
+                            style = MaterialTheme.typography.bodySmall.copy(color = Color.Gray)
+                        )
+                    }
+                }
+            } else {
+                LazyColumn(
+                    modifier = Modifier.fillMaxSize(),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    items(karyakars) { karyakar ->
+                        Card(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .testTag("karyakar_card_${karyakar.id}"),
+                            shape = RoundedCornerShape(20.dp),
+                            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                            border = BorderStroke(1.dp, BorderSubtleLight.copy(alpha = 0.35f)),
+                            elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+                        ) {
+                            Column(modifier = Modifier.padding(16.dp)) {
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    BalakAvatar(name = karyakar.name, size = 44)
+                                    Spacer(modifier = Modifier.width(12.dp))
 
-                                Column(modifier = Modifier.weight(1f)) {
-                                    Row(verticalAlignment = Alignment.CenterVertically) {
-                                        Text(
-                                            text = karyakar.name,
-                                            style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold)
+                                    Column(modifier = Modifier.weight(1f)) {
+                                        Row(verticalAlignment = Alignment.CenterVertically) {
+                                            Text(
+                                                text = karyakar.name,
+                                                style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold)
+                                            )
+                                            Spacer(modifier = Modifier.width(6.dp))
+                                            Surface(
+                                                shape = RoundedCornerShape(100.dp),
+                                                color = if (karyakar.role.contains("Admin", ignoreCase = true) || karyakar.role.contains("Sanchalak", ignoreCase = true)) {
+                                                    SaffronPrimary.copy(alpha = 0.12f)
+                                                } else {
+                                                    NavySecondary.copy(alpha = 0.1f)
+                                                }
+                                            ) {
+                                                Text(
+                                                    text = karyakar.role,
+                                                    color = if (karyakar.role.contains("Admin", ignoreCase = true) || karyakar.role.contains("Sanchalak", ignoreCase = true)) {
+                                                        SaffronPrimary
+                                                    } else {
+                                                        NavySecondary
+                                                    },
+                                                    style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold, fontSize = 9.sp),
+                                                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp)
+                                                )
+                                            }
+                                        }
+
+                                        val details = listOfNotNull(
+                                            karyakar.responsibilities.takeIf { it.isNotBlank() },
+                                            karyakar.phone.takeIf { it.isNotBlank() }
+                                        ).joinToString(" • ")
+
+                                        if (details.isNotBlank()) {
+                                            Text(
+                                                text = details,
+                                                style = MaterialTheme.typography.bodySmall.copy(
+                                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                                    fontSize = 11.sp
+                                                )
+                                            )
+                                        }
+                                    }
+
+                                    if (karyakar.phone.isNotBlank()) {
+                                        IconButton(
+                                            onClick = {
+                                                val intent = Intent(Intent.ACTION_DIAL).apply {
+                                                    data = Uri.parse("tel:${karyakar.phone}")
+                                                }
+                                                context.startActivity(intent)
+                                            }
+                                        ) {
+                                            Icon(Icons.Default.Phone, contentDescription = "Call", tint = Color(0xFF2563EB), modifier = Modifier.size(18.dp))
+                                        }
+                                    }
+                                }
+
+                                Spacer(modifier = Modifier.height(10.dp))
+
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Text(
+                                        text = if (karyakar.active) "Status: Active Karyakar" else "Status: Inactive / Disabled",
+                                        style = MaterialTheme.typography.labelSmall.copy(
+                                            color = if (karyakar.active) PresentGreen else Color.Gray,
+                                            fontWeight = FontWeight.SemiBold
                                         )
-                                        Spacer(modifier = Modifier.width(6.dp))
+                                    )
+
+                                    if (isAdmin) {
+                                        Switch(
+                                            checked = karyakar.active,
+                                            onCheckedChange = { onToggleKaryakarActive(karyakar.id) },
+                                            colors = SwitchDefaults.colors(checkedThumbColor = SaffronPrimary)
+                                        )
+                                    } else {
                                         Surface(
                                             shape = RoundedCornerShape(100.dp),
-                                            color = if (karyakar.role.contains("Coordinator", ignoreCase = true)) SaffronPrimary.copy(alpha = 0.12f) else NavySecondary.copy(alpha = 0.1f)
+                                            color = if (karyakar.active) PresentGreen.copy(alpha = 0.1f) else Color.Gray.copy(alpha = 0.1f)
                                         ) {
                                             Text(
-                                                text = karyakar.role,
-                                                color = if (karyakar.role.contains("Coordinator", ignoreCase = true)) SaffronPrimary else NavySecondary,
+                                                text = if (karyakar.active) "ACTIVE" else "INACTIVE",
+                                                color = if (karyakar.active) PresentGreen else Color.Gray,
                                                 style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold, fontSize = 9.sp),
                                                 modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp)
                                             )
                                         }
                                     }
-
-                                    Text(
-                                        text = "In-charge: ${karyakar.responsibilities} • ${karyakar.phone}",
-                                        style = MaterialTheme.typography.bodySmall.copy(
-                                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                            fontSize = 11.sp
-                                        )
-                                    )
                                 }
-
-                                if (karyakar.phone.isNotBlank()) {
-                                    IconButton(
-                                        onClick = {
-                                            val intent = Intent(Intent.ACTION_DIAL).apply {
-                                                data = Uri.parse("tel:${karyakar.phone}")
-                                            }
-                                            context.startActivity(intent)
-                                        }
-                                    ) {
-                                        Icon(Icons.Default.Phone, contentDescription = "Call", tint = Color(0xFF2563EB), modifier = Modifier.size(18.dp))
-                                    }
-                                }
-                            }
-
-                            Spacer(modifier = Modifier.height(10.dp))
-
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.SpaceBetween,
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Text(
-                                    text = if (karyakar.active) "Status: Active Karyakar" else "Status: Inactive",
-                                    style = MaterialTheme.typography.labelSmall.copy(
-                                        color = if (karyakar.active) PresentGreen else Color.Gray,
-                                        fontWeight = FontWeight.SemiBold
-                                    )
-                                )
-
-                                Switch(
-                                    checked = karyakar.active,
-                                    onCheckedChange = { onToggleKaryakarActive(karyakar.id) },
-                                    colors = SwitchDefaults.colors(checkedThumbColor = SaffronPrimary)
-                                )
                             }
                         }
                     }
@@ -216,7 +300,7 @@ fun KaryakarManagementScreen(
         var name by remember { mutableStateOf("") }
         var email by remember { mutableStateOf("") }
         var mobile by remember { mutableStateOf("") }
-        var role by remember { mutableStateOf("Karyakar") }
+        var role by remember { mutableStateOf("Bal Mandal Karyakar") }
         var assignedStandard by remember { mutableStateOf("Std 5 - 7") }
         var roleDropdownExpanded by remember { mutableStateOf(false) }
 
@@ -283,7 +367,7 @@ fun KaryakarManagementScreen(
                             expanded = roleDropdownExpanded,
                             onDismissRequest = { roleDropdownExpanded = false }
                         ) {
-                            listOf("Coordinator", "Karyakar", "Sah-Karyakar", "Sevak").forEach { r ->
+                            listOf("Bal Mandal Karyakar", "Sanchalak (Admin)", "Sah-Karyakar", "Attendance Incharge", "Activity Coordinator").forEach { r ->
                                 DropdownMenuItem(
                                     text = { Text(r) },
                                     onClick = {
@@ -298,7 +382,7 @@ fun KaryakarManagementScreen(
                     OutlinedTextField(
                         value = assignedStandard,
                         onValueChange = { assignedStandard = it },
-                        label = { Text("Assigned Group / Standard (e.g. Std 1-4)") },
+                        label = { Text("Responsibilities / Group (e.g. Std 1-4)") },
                         singleLine = true,
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(14.dp),
@@ -319,7 +403,8 @@ fun KaryakarManagementScreen(
                                     email = email,
                                     phone = mobile,
                                     role = role,
-                                    responsibilities = assignedStandard
+                                    responsibilities = assignedStandard,
+                                    active = true
                                 )
                             )
                             showAddDialog = false
@@ -340,4 +425,3 @@ fun KaryakarManagementScreen(
         )
     }
 }
-

@@ -252,6 +252,7 @@ fun BalMandalApp(
                     is Screen.KaryakarManagement -> {
                         KaryakarManagementScreen(
                             karyakars = karyakars,
+                            currentUser = currentUser,
                             onAddKaryakar = { viewModel.addKaryakar(it) },
                             onToggleKaryakarActive = { viewModel.toggleKaryakarActive(it) },
                             isGujarati = isGujarati

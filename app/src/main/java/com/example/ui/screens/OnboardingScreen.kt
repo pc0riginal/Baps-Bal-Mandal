@@ -269,42 +269,26 @@ fun OnboardingScreen(
 
                     Spacer(modifier = Modifier.height(14.dp))
 
-                    // 5. Role Selector
-                    ExposedDropdownMenuBox(
-                        expanded = roleDropdownExpanded,
-                        onExpandedChange = { roleDropdownExpanded = it },
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        OutlinedTextField(
-                            value = roles.find { it.first == selectedRole }?.second ?: "Bal Mandal Karyakar",
-                            onValueChange = {},
-                            readOnly = true,
-                            label = { Text("Your Role") },
-                            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = roleDropdownExpanded) },
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .menuAnchor(MenuAnchorType.PrimaryNotEditable),
-                            shape = RoundedCornerShape(14.dp),
-                            colors = OutlinedTextFieldDefaults.colors(
-                                focusedBorderColor = SaffronPrimary,
-                                unfocusedBorderColor = BorderSubtleLight.copy(alpha = 0.5f)
+                    // 5. Role Display
+                    val isOwnerAdmin = currentUser?.isAdmin == true
+                    OutlinedTextField(
+                        value = if (isOwnerAdmin) "Sanchalak (Mandal Admin - DB Owner)" else "Bal Mandal Karyakar",
+                        onValueChange = {},
+                        readOnly = true,
+                        label = { Text("Role") },
+                        supportingText = {
+                            Text(
+                                if (isOwnerAdmin) "Database Owner has Full Administrator privileges"
+                                else "Karyakar permissions (Admin privileges managed by Sanchalak)"
                             )
+                        },
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(14.dp),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = SaffronPrimary,
+                            unfocusedBorderColor = BorderSubtleLight.copy(alpha = 0.5f)
                         )
-                        ExposedDropdownMenu(
-                            expanded = roleDropdownExpanded,
-                            onDismissRequest = { roleDropdownExpanded = false }
-                        ) {
-                            roles.forEach { (roleKey, roleLabel) ->
-                                DropdownMenuItem(
-                                    text = { Text(roleLabel) },
-                                    onClick = {
-                                        selectedRole = roleKey
-                                        roleDropdownExpanded = false
-                                    }
-                                )
-                            }
-                        }
-                    }
+                    )
 
                     if (errorMessage != null) {
                         Spacer(modifier = Modifier.height(12.dp))
