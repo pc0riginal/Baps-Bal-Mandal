@@ -31,6 +31,7 @@ import com.example.ui.screens.DashboardScreen
 import com.example.ui.screens.KaryakarManagementScreen
 import com.example.ui.screens.LoginScreen
 import com.example.ui.screens.MoreScreen
+import com.example.ui.screens.OnboardingScreen
 import com.example.ui.screens.ReportsScreen
 import com.example.ui.theme.MyApplicationTheme
 import com.example.viewmodel.BalMandalViewModel
@@ -82,7 +83,7 @@ fun BalMandalApp(
     }
 
     // Handle System Back button
-    BackHandler(enabled = currentScreen !is Screen.Dashboard && currentScreen !is Screen.Login) {
+    BackHandler(enabled = currentScreen !is Screen.Dashboard && currentScreen !is Screen.Login && currentScreen !is Screen.Onboarding) {
         viewModel.navigateBack()
     }
 
@@ -90,9 +91,6 @@ fun BalMandalApp(
 
     if (currentUser == null || currentScreen is Screen.Login) {
         LoginScreen(
-            onLogin = { email, password ->
-                viewModel.login(email, password)
-            },
             onGoogleSignIn = { context ->
                 viewModel.signInWithGoogle(context)
             },
@@ -104,6 +102,13 @@ fun BalMandalApp(
             },
             verificationId = verificationId,
             userMessage = userMessage
+        )
+    } else if (currentUser?.isProfileComplete == false || currentScreen is Screen.Onboarding) {
+        OnboardingScreen(
+            currentUser = currentUser,
+            onCompleteOnboarding = { name, phone, mandalName, mandalCity, role ->
+                viewModel.completeOnboarding(name, phone, mandalName, mandalCity, role)
+            }
         )
     } else {
         val title = when (currentScreen) {
@@ -229,7 +234,10 @@ fun BalMandalApp(
                             isGujarati = isGujarati,
                             onToggleLanguage = { viewModel.toggleLanguage() },
                             onLogout = { viewModel.logout() },
-                            onNavigate = { dest -> viewModel.navigateTo(dest) }
+                            onNavigate = { dest -> viewModel.navigateTo(dest) },
+                            onUpdateProfile = { name, phone, mandalName, mandalCity, role ->
+                                viewModel.updateMandalProfile(name, phone, mandalName, mandalCity, role)
+                            }
                         )
                     }
 

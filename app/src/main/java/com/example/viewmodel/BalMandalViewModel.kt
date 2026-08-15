@@ -22,6 +22,7 @@ import kotlinx.coroutines.launch
 
 sealed class Screen {
     data object Login : Screen()
+    data object Onboarding : Screen()
     data object Dashboard : Screen()
     data object BalaksList : Screen()
     data class BalakDetail(val balakId: String) : Screen()
@@ -140,6 +141,44 @@ class BalMandalViewModel(
         _userMessage.value = null
     }
 
+    // --- Onboarding & Profile Setup ---
+    fun completeOnboarding(name: String, phone: String, mandalName: String, mandalCity: String, role: String) {
+        val user = currentUser.value ?: return
+        val updated = user.copy(
+            name = name,
+            phone = phone,
+            mandalName = mandalName,
+            mandalCity = mandalCity,
+            role = role,
+            isProfileComplete = true
+        )
+        repository.updateUserProfile(updated) { success, error ->
+            if (success) {
+                _currentScreen.value = Screen.Dashboard
+                _userMessage.value = "Jai Swaminarayan! Welcome, $name"
+            } else {
+                _userMessage.value = "Setup failed: $error"
+            }
+        }
+    }
+
+    fun updateMandalProfile(name: String, phone: String, mandalName: String, mandalCity: String, role: String) {
+        val user = currentUser.value ?: return
+        val updated = user.copy(
+            name = name,
+            phone = phone,
+            mandalName = mandalName,
+            mandalCity = mandalCity,
+            role = role,
+            isProfileComplete = true
+        )
+        repository.updateUserProfile(updated) { success, _ ->
+            if (success) {
+                _userMessage.value = "Mandal profile updated successfully! ✓"
+            }
+        }
+    }
+
     // --- Auth Actions ---
     fun signInWithGoogle(context: android.content.Context) {
         viewModelScope.launch {
@@ -159,7 +198,12 @@ class BalMandalViewModel(
                     val googleIdTokenCredential = com.google.android.libraries.identity.googleid.GoogleIdTokenCredential.createFrom(credential.data)
                     repository.signInWithGoogle(googleIdTokenCredential.idToken) { success, error ->
                         if (success) {
-                            _currentScreen.value = Screen.Dashboard
+                            val user = repository.currentUser.value
+                            if (user?.isProfileComplete == true) {
+                                _currentScreen.value = Screen.Dashboard
+                            } else {
+                                _currentScreen.value = Screen.Onboarding
+                            }
                             _userMessage.value = "Jai Swaminarayan! Logged in successfully"
                         } else {
                             _userMessage.value = "Login failed: $error"
@@ -184,7 +228,12 @@ class BalMandalViewModel(
                 override fun onVerificationCompleted(credential: com.google.firebase.auth.PhoneAuthCredential) {
                     repository.signInWithCredential(credential) { success, error ->
                         if (success) {
-                            _currentScreen.value = Screen.Dashboard
+                            val user = repository.currentUser.value
+                            if (user?.isProfileComplete == true) {
+                                _currentScreen.value = Screen.Dashboard
+                            } else {
+                                _currentScreen.value = Screen.Onboarding
+                            }
                             _userMessage.value = "Jai Swaminarayan! Logged in successfully"
                         } else {
                             _userMessage.value = "Login failed: $error"
@@ -214,18 +263,12 @@ class BalMandalViewModel(
         val credential = com.google.firebase.auth.PhoneAuthProvider.getCredential(vid, code)
         repository.signInWithCredential(credential) { success, error ->
             if (success) {
-                _currentScreen.value = Screen.Dashboard
-                _userMessage.value = "Jai Swaminarayan! Logged in successfully"
-            } else {
-                _userMessage.value = "Login failed: $error"
-            }
-        }
-    }
-
-    fun login(email: String, password: String) {
-        repository.login(email, password) { success, error ->
-            if (success) {
-                _currentScreen.value = Screen.Dashboard
+                val user = repository.currentUser.value
+                if (user?.isProfileComplete == true) {
+                    _currentScreen.value = Screen.Dashboard
+                } else {
+                    _currentScreen.value = Screen.Onboarding
+                }
                 _userMessage.value = "Jai Swaminarayan! Logged in successfully"
             } else {
                 _userMessage.value = "Login failed: $error"

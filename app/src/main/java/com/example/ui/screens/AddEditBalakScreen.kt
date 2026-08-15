@@ -67,19 +67,19 @@ fun AddEditBalakScreen(
 ) {
     var firstName by remember { mutableStateOf(initialBalak?.firstName ?: "") }
     var lastName by remember { mutableStateOf(initialBalak?.lastName ?: "") }
-    var dateOfBirth by remember { mutableStateOf(initialBalak?.dateOfBirth ?: "2015-05-15") }
+    var dateOfBirth by remember { mutableStateOf(initialBalak?.dateOfBirth ?: "") }
     var age by remember { mutableIntStateOf(initialBalak?.age ?: 10) }
     var gender by remember { mutableStateOf(initialBalak?.gender ?: "Male") }
     var standard by remember { mutableIntStateOf(initialBalak?.standard ?: 5) }
     var parentName by remember { mutableStateOf(initialBalak?.parentName ?: "") }
     var parentMobile by remember { mutableStateOf(initialBalak?.parentMobile ?: "") }
     var address by remember { mutableStateOf(initialBalak?.address ?: "") }
-    var school by remember { mutableStateOf(initialBalak?.school ?: "Swaminarayan Gurukul Vidyalaya") }
+    var school by remember { mutableStateOf(initialBalak?.school ?: "") }
     var bloodGroup by remember { mutableStateOf(initialBalak?.bloodGroup ?: "B+") }
     var notes by remember { mutableStateOf(initialBalak?.notes ?: "") }
-    var interests by remember { mutableStateOf(initialBalak?.interests ?: "Kirtan, Satsang Quiz, Cricket") }
-    var skills by remember { mutableStateOf(initialBalak?.skills ?: "Mukhpath") }
-    var assignedKaryakar by remember { mutableStateOf(initialBalak?.assignedKaryakar ?: "Mahesh Patel") }
+    var interests by remember { mutableStateOf(initialBalak?.interests ?: "") }
+    var skills by remember { mutableStateOf(initialBalak?.skills ?: "") }
+    var assignedKaryakar by remember { mutableStateOf(initialBalak?.assignedKaryakar ?: "") }
     var active by remember { mutableStateOf(initialBalak?.active ?: true) }
 
     var standardDropdownExpanded by remember { mutableStateOf(false) }

@@ -1,18 +1,26 @@
 package com.example.data.models
 
+import com.google.firebase.firestore.Exclude
+import com.google.firebase.firestore.IgnoreExtraProperties
+
+@IgnoreExtraProperties
 data class UserProfile(
     val uid: String = "",
     val name: String = "",
     val email: String = "",
     val phone: String = "",
-    val role: String = "karyakar", // "admin" or "karyakar"
-    val mandalId: String = "mandal-001",
-    val mandalName: String = "BAPS Bal Mandal - Ahmedabad West",
-    val active: Boolean = true
+    val role: String = "karyakar", // "admin", "sanchalak", or "karyakar"
+    val mandalId: String = "",
+    val mandalName: String = "",
+    val mandalCity: String = "",
+    val active: Boolean = true,
+    val isProfileComplete: Boolean = false
 ) {
-    val isAdmin: Boolean get() = role.equals("admin", ignoreCase = true)
+    @get:Exclude
+    val isAdmin: Boolean get() = role.equals("admin", ignoreCase = true) || role.equals("sanchalak", ignoreCase = true)
 }
 
+@IgnoreExtraProperties
 data class Balak(
     val id: String = "",
     val firstName: String = "",
@@ -24,21 +32,24 @@ data class Balak(
     val parentName: String = "",
     val parentMobile: String = "",
     val address: String = "",
-    val mandalId: String = "mandal-001",
-    val mandalName: String = "BAPS Bal Mandal",
+    val mandalId: String = "",
+    val mandalName: String = "",
     val joiningDate: String = "",
     val photoUrl: String = "",
     val school: String = "",
     val bloodGroup: String = "B+",
     val notes: String = "",
-    val interests: String = "Kirtan, Satsang Quiz, Cricket",
-    val skills: String = "Singing, Speech",
-    val assignedKaryakar: String = "Mahesh Patel",
+    val interests: String = "Kirtan, Satsang Quiz",
+    val skills: String = "Mukhpath",
+    val assignedKaryakar: String = "",
     val active: Boolean = true,
     val createdAt: Long = System.currentTimeMillis(),
     val updatedAt: Long = System.currentTimeMillis()
 ) {
+    @get:Exclude
     val fullName: String get() = if (firstName.isNotBlank()) "$firstName $lastName".trim() else "Balak"
+
+    @get:Exclude
     val balakIdFormatted: String get() = "BAL-${id.takeLast(4).padStart(4, '0')}"
 }
 
@@ -55,6 +66,7 @@ enum class AttendanceStatus(val value: String, val label: String) {
     }
 }
 
+@IgnoreExtraProperties
 data class AttendanceRecord(
     val id: String = "",
     val balakId: String = "",
@@ -62,27 +74,29 @@ data class AttendanceRecord(
     val sabhaId: String = "",
     val date: String = "", // YYYY-MM-DD
     val status: AttendanceStatus = AttendanceStatus.PRESENT,
-    val markedBy: String = "Mahesh Patel",
+    val markedBy: String = "",
     val note: String = "",
     val timestamp: Long = System.currentTimeMillis(),
-    val mandalId: String = "mandal-001"
+    val mandalId: String = ""
 )
 
+@IgnoreExtraProperties
 data class SabhaSession(
     val id: String = "",
     val title: String = "Weekly Bal Sabha",
     val date: String = "", // YYYY-MM-DD
     val displayDate: String = "", // e.g. "Sunday, 16 Aug 2026"
     val time: String = "5:00 PM - 6:30 PM",
-    val location: String = "BAPS Swaminarayan Mandir, Bal Hall",
-    val topic: String = "Mahant Swami Maharaj Vicharan & Niyama",
-    val mandalId: String = "mandal-001",
+    val location: String = "BAPS Swaminarayan Mandir",
+    val topic: String = "",
+    val mandalId: String = "",
     val totalBalaks: Int = 0,
     val presentCount: Int = 0,
     val absentCount: Int = 0,
     val isCompleted: Boolean = false
 )
 
+@IgnoreExtraProperties
 data class MandalActivity(
     val id: String = "",
     val name: String = "",
@@ -91,19 +105,20 @@ data class MandalActivity(
     val description: String = "",
     val participantIds: List<String> = emptyList(),
     val notes: String = "",
-    val mandalId: String = "mandal-001"
+    val mandalId: String = ""
 )
 
+@IgnoreExtraProperties
 data class Karyakar(
     val id: String = "",
     val name: String = "",
     val email: String = "",
     val phone: String = "",
     val role: String = "karyakar",
-    val mandalId: String = "mandal-001",
-    val mandalName: String = "BAPS Bal Mandal - Ahmedabad West",
+    val mandalId: String = "",
+    val mandalName: String = "",
     val active: Boolean = true,
-    val responsibilities: String = "Std 5-7 Balaks, Attendance Incharge"
+    val responsibilities: String = ""
 )
 
 data class BalakAttendanceSummary(

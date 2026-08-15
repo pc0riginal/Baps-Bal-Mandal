@@ -126,8 +126,8 @@ fun DashboardScreen(
                             )
                         )
                         Text(
-                            text = if (isGujarati) "જય સ્વામિનારાયણ, ${currentUser?.name?.substringBefore(" ") ?: "મહેશ"} 👋" 
-                                   else "Jai Swaminarayan, ${currentUser?.name?.substringBefore(" ") ?: "Mahesh"} 👋",
+                            text = if (isGujarati) "જય સ્વામિનારાયણ, ${currentUser?.name?.substringBefore(" ") ?: "કાર્યકર"} 👋" 
+                                   else "Jai Swaminarayan, ${currentUser?.name?.substringBefore(" ") ?: "Karyakar"} 👋",
                             style = MaterialTheme.typography.titleMedium.copy(
                                 fontWeight = FontWeight.Bold,
                                 color = MaterialTheme.colorScheme.onSurface,
@@ -135,7 +135,7 @@ fun DashboardScreen(
                             )
                         )
                         Text(
-                            text = currentUser?.mandalName ?: "BAPS Swaminarayan Mandir",
+                            text = currentUser?.mandalName?.takeIf { it.isNotBlank() } ?: (if (isGujarati) "બી.એ.પી.એસ. બાળ મંડળ" else "BAPS Bal Mandal"),
                             style = MaterialTheme.typography.bodySmall.copy(
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 fontSize = 12.sp
