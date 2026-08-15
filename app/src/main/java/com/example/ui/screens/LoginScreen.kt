@@ -82,11 +82,20 @@ fun LoginScreen(
     var isPhoneMode by remember { mutableStateOf(false) }
     var isPasswordVisible by remember { mutableStateOf(false) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
+    var isSubmitting by remember { mutableStateOf(false) }
     val context = LocalContext.current
-    
+
     androidx.compose.runtime.LaunchedEffect(userMessage) {
         if (userMessage != null) {
-            errorMessage = userMessage
+            isSubmitting = false
+            if (userMessage.contains("failed", ignoreCase = true) ||
+                userMessage.contains("error", ignoreCase = true) ||
+                userMessage.contains("invalid", ignoreCase = true) ||
+                userMessage.contains("cannot", ignoreCase = true) ||
+                userMessage.contains("expired", ignoreCase = true)
+            ) {
+                errorMessage = userMessage
+            }
         }
     }
 
