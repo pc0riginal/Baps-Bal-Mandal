@@ -9,7 +9,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -18,8 +17,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.Person
-import androidx.compose.material.icons.filled.Phone
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -33,10 +31,10 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.MenuAnchorType
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -48,21 +46,24 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.data.models.Balak
+import com.example.ui.components.mandalTextFieldColors
 import com.example.ui.theme.AbsentRed
 import com.example.ui.theme.BorderSubtleLight
+import com.example.ui.theme.PresentGreen
 import com.example.ui.theme.SaffronPrimary
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AddEditBalakScreen(
-    initialBalak: Balak?,
-    isGujarati: Boolean,
+    initialBalak: Balak? = null,
+    isGujarati: Boolean = false,
     onSave: (Balak) -> Unit,
-    onDelete: ((String) -> Unit)?,
+    onDelete: ((String) -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
     var firstName by remember { mutableStateOf(initialBalak?.firstName ?: "") }
@@ -87,6 +88,7 @@ fun AddEditBalakScreen(
     var bloodGroupDropdownExpanded by remember { mutableStateOf(false) }
 
     var errorMessage by remember { mutableStateOf<String?>(null) }
+    var showDeleteConfirm by remember { mutableStateOf(false) }
 
     val isEditing = initialBalak != null && initialBalak.id.isNotBlank()
 
@@ -144,32 +146,34 @@ fun AddEditBalakScreen(
                 ) {
                     OutlinedTextField(
                         value = firstName,
-                        onValueChange = { firstName = it },
+                        onValueChange = {
+                            firstName = it
+                            errorMessage = null
+                        },
                         label = { Text("First Name *") },
                         modifier = Modifier
                             .weight(1f)
                             .testTag("input_first_name"),
                         singleLine = true,
                         shape = RoundedCornerShape(14.dp),
-                        colors = OutlinedTextFieldDefaults.colors(
-                            focusedBorderColor = SaffronPrimary,
-                            unfocusedBorderColor = BorderSubtleLight.copy(alpha = 0.4f)
-                        )
+                        keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Words),
+                        colors = mandalTextFieldColors()
                     )
 
                     OutlinedTextField(
                         value = lastName,
-                        onValueChange = { lastName = it },
+                        onValueChange = {
+                            lastName = it
+                            errorMessage = null
+                        },
                         label = { Text("Last Name *") },
                         modifier = Modifier
                             .weight(1f)
                             .testTag("input_last_name"),
                         singleLine = true,
                         shape = RoundedCornerShape(14.dp),
-                        colors = OutlinedTextFieldDefaults.colors(
-                            focusedBorderColor = SaffronPrimary,
-                            unfocusedBorderColor = BorderSubtleLight.copy(alpha = 0.4f)
-                        )
+                        keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Words),
+                        colors = mandalTextFieldColors()
                     )
                 }
 
@@ -193,16 +197,13 @@ fun AddEditBalakScreen(
                                 .menuAnchor(MenuAnchorType.PrimaryNotEditable)
                                 .testTag("dropdown_standard"),
                             shape = RoundedCornerShape(14.dp),
-                            colors = OutlinedTextFieldDefaults.colors(
-                                focusedBorderColor = SaffronPrimary,
-                                unfocusedBorderColor = BorderSubtleLight.copy(alpha = 0.4f)
-                            )
+                            colors = mandalTextFieldColors()
                         )
                         ExposedDropdownMenu(
                             expanded = standardDropdownExpanded,
                             onDismissRequest = { standardDropdownExpanded = false }
                         ) {
-                            (1..10).forEach { std ->
+                            (1..12).forEach { std ->
                                 DropdownMenuItem(
                                     text = { Text("Std. $std") },
                                     onClick = {
@@ -215,45 +216,7 @@ fun AddEditBalakScreen(
                         }
                     }
 
-                    // Age Field
-                    OutlinedTextField(
-                        value = age.toString(),
-                        onValueChange = { age = it.toIntOrNull() ?: age },
-                        label = { Text("Age *") },
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                        modifier = Modifier
-                            .weight(1f)
-                            .testTag("input_age"),
-                        singleLine = true,
-                        shape = RoundedCornerShape(14.dp),
-                        colors = OutlinedTextFieldDefaults.colors(
-                            focusedBorderColor = SaffronPrimary,
-                            unfocusedBorderColor = BorderSubtleLight.copy(alpha = 0.4f)
-                        )
-                    )
-                }
-
-                // Date of Birth
-                OutlinedTextField(
-                    value = dateOfBirth,
-                    onValueChange = { dateOfBirth = it },
-                    label = { Text("Date of Birth (YYYY-MM-DD)") },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .testTag("input_dob"),
-                    singleLine = true,
-                    shape = RoundedCornerShape(14.dp),
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor = SaffronPrimary,
-                        unfocusedBorderColor = BorderSubtleLight.copy(alpha = 0.4f)
-                    )
-                )
-
-                // Gender & Blood Group
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(10.dp)
-                ) {
+                    // Gender Dropdown
                     ExposedDropdownMenuBox(
                         expanded = genderDropdownExpanded,
                         onExpandedChange = { genderDropdownExpanded = it },
@@ -265,12 +228,11 @@ fun AddEditBalakScreen(
                             readOnly = true,
                             label = { Text("Gender") },
                             trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = genderDropdownExpanded) },
-                            modifier = Modifier.menuAnchor(MenuAnchorType.PrimaryNotEditable),
+                            modifier = Modifier
+                                .menuAnchor(MenuAnchorType.PrimaryNotEditable)
+                                .testTag("dropdown_gender"),
                             shape = RoundedCornerShape(14.dp),
-                            colors = OutlinedTextFieldDefaults.colors(
-                                focusedBorderColor = SaffronPrimary,
-                                unfocusedBorderColor = BorderSubtleLight.copy(alpha = 0.4f)
-                            )
+                            colors = mandalTextFieldColors()
                         )
                         ExposedDropdownMenu(
                             expanded = genderDropdownExpanded,
@@ -287,45 +249,90 @@ fun AddEditBalakScreen(
                             }
                         }
                     }
+                }
 
-                    ExposedDropdownMenuBox(
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
+                    OutlinedTextField(
+                        value = dateOfBirth,
+                        onValueChange = { dateOfBirth = it },
+                        label = { Text("Date of Birth (YYYY-MM-DD)") },
+                        placeholder = { Text("2015-05-15") },
+                        modifier = Modifier
+                            .weight(1f)
+                            .testTag("input_dob"),
+                        singleLine = true,
+                        shape = RoundedCornerShape(14.dp),
+                        colors = mandalTextFieldColors()
+                    )
+
+                    OutlinedTextField(
+                        value = if (age > 0) age.toString() else "",
+                        onValueChange = { age = it.toIntOrNull() ?: age },
+                        label = { Text("Age") },
+                        modifier = Modifier
+                            .weight(0.6f)
+                            .testTag("input_age"),
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                        singleLine = true,
+                        shape = RoundedCornerShape(14.dp),
+                        colors = mandalTextFieldColors()
+                    )
+                }
+
+                OutlinedTextField(
+                    value = school,
+                    onValueChange = { school = it },
+                    label = { Text("School Name") },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .testTag("input_school"),
+                    singleLine = true,
+                    shape = RoundedCornerShape(14.dp),
+                    keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Words),
+                    colors = mandalTextFieldColors()
+                )
+
+                // Blood Group Dropdown
+                ExposedDropdownMenuBox(
+                    expanded = bloodGroupDropdownExpanded,
+                    onExpandedChange = { bloodGroupDropdownExpanded = it },
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    OutlinedTextField(
+                        value = bloodGroup,
+                        onValueChange = {},
+                        readOnly = true,
+                        label = { Text("Blood Group") },
+                        trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = bloodGroupDropdownExpanded) },
+                        modifier = Modifier
+                            .menuAnchor(MenuAnchorType.PrimaryNotEditable)
+                            .fillMaxWidth()
+                            .testTag("dropdown_blood_group"),
+                        shape = RoundedCornerShape(14.dp),
+                        colors = mandalTextFieldColors()
+                    )
+                    ExposedDropdownMenu(
                         expanded = bloodGroupDropdownExpanded,
-                        onExpandedChange = { bloodGroupDropdownExpanded = it },
-                        modifier = Modifier.weight(1f)
+                        onDismissRequest = { bloodGroupDropdownExpanded = false }
                     ) {
-                        OutlinedTextField(
-                            value = bloodGroup,
-                            onValueChange = {},
-                            readOnly = true,
-                            label = { Text("Blood Group") },
-                            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = bloodGroupDropdownExpanded) },
-                            modifier = Modifier.menuAnchor(MenuAnchorType.PrimaryNotEditable),
-                            shape = RoundedCornerShape(14.dp),
-                            colors = OutlinedTextFieldDefaults.colors(
-                                focusedBorderColor = SaffronPrimary,
-                                unfocusedBorderColor = BorderSubtleLight.copy(alpha = 0.4f)
+                        listOf("A+", "A-", "B+", "B-", "O+", "O-", "AB+", "AB-").forEach { bg ->
+                            DropdownMenuItem(
+                                text = { Text(bg) },
+                                onClick = {
+                                    bloodGroup = bg
+                                    bloodGroupDropdownExpanded = false
+                                }
                             )
-                        )
-                        ExposedDropdownMenu(
-                            expanded = bloodGroupDropdownExpanded,
-                            onDismissRequest = { bloodGroupDropdownExpanded = false }
-                        ) {
-                            listOf("A+", "A-", "B+", "B-", "O+", "O-", "AB+", "AB-").forEach { bg ->
-                                DropdownMenuItem(
-                                    text = { Text(bg) },
-                                    onClick = {
-                                        bloodGroup = bg
-                                        bloodGroupDropdownExpanded = false
-                                    }
-                                )
-                            }
                         }
                     }
                 }
             }
         }
 
-        // Section 2: Parent & Contact Info
+        // Section 2: Guardian Details
         Card(
             modifier = Modifier.fillMaxWidth(),
             shape = RoundedCornerShape(24.dp),
@@ -338,7 +345,7 @@ fun AddEditBalakScreen(
                 verticalArrangement = Arrangement.spacedBy(14.dp)
             ) {
                 Text(
-                    text = "Parent & Contact Details",
+                    text = "Guardian & Contact Details",
                     style = MaterialTheme.typography.titleSmall.copy(
                         fontWeight = FontWeight.Bold,
                         color = SaffronPrimary
@@ -347,35 +354,34 @@ fun AddEditBalakScreen(
 
                 OutlinedTextField(
                     value = parentName,
-                    onValueChange = { parentName = it },
+                    onValueChange = {
+                        parentName = it
+                        errorMessage = null
+                    },
                     label = { Text("Parent / Guardian Name *") },
-                    leadingIcon = { Icon(Icons.Default.Person, contentDescription = null, tint = SaffronPrimary) },
                     modifier = Modifier
                         .fillMaxWidth()
                         .testTag("input_parent_name"),
                     singleLine = true,
                     shape = RoundedCornerShape(14.dp),
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor = SaffronPrimary,
-                        unfocusedBorderColor = BorderSubtleLight.copy(alpha = 0.4f)
-                    )
+                    keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Words),
+                    colors = mandalTextFieldColors()
                 )
 
                 OutlinedTextField(
                     value = parentMobile,
-                    onValueChange = { parentMobile = it },
-                    label = { Text("Parent Mobile Number *") },
-                    leadingIcon = { Icon(Icons.Default.Phone, contentDescription = null, tint = SaffronPrimary) },
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
+                    onValueChange = {
+                        parentMobile = it
+                        errorMessage = null
+                    },
+                    label = { Text("Parent Mobile (WhatsApp) *") },
                     modifier = Modifier
                         .fillMaxWidth()
                         .testTag("input_parent_mobile"),
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
                     singleLine = true,
                     shape = RoundedCornerShape(14.dp),
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor = SaffronPrimary,
-                        unfocusedBorderColor = BorderSubtleLight.copy(alpha = 0.4f)
-                    )
+                    colors = mandalTextFieldColors()
                 )
 
                 OutlinedTextField(
@@ -385,17 +391,15 @@ fun AddEditBalakScreen(
                     modifier = Modifier
                         .fillMaxWidth()
                         .testTag("input_address"),
-                    maxLines = 2,
+                    minLines = 2,
+                    maxLines = 3,
                     shape = RoundedCornerShape(14.dp),
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor = SaffronPrimary,
-                        unfocusedBorderColor = BorderSubtleLight.copy(alpha = 0.4f)
-                    )
+                    colors = mandalTextFieldColors()
                 )
             }
         }
 
-        // Section 3: Academic & Notes
+        // Section 3: Mandal & Activities
         Card(
             modifier = Modifier.fillMaxWidth(),
             shape = RoundedCornerShape(24.dp),
@@ -408,7 +412,7 @@ fun AddEditBalakScreen(
                 verticalArrangement = Arrangement.spacedBy(14.dp)
             ) {
                 Text(
-                    text = "School & Special Observations",
+                    text = "Mandal & Talents",
                     style = MaterialTheme.typography.titleSmall.copy(
                         fontWeight = FontWeight.Bold,
                         color = SaffronPrimary
@@ -416,89 +420,104 @@ fun AddEditBalakScreen(
                 )
 
                 OutlinedTextField(
-                    value = school,
-                    onValueChange = { school = it },
-                    label = { Text("School Name") },
-                    modifier = Modifier.fillMaxWidth(),
+                    value = interests,
+                    onValueChange = { interests = it },
+                    label = { Text("Interests & Hobbies") },
+                    placeholder = { Text("e.g. Kirtan, Satsang Quiz, Drawing, Cricket") },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .testTag("input_interests"),
                     singleLine = true,
                     shape = RoundedCornerShape(14.dp),
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor = SaffronPrimary,
-                        unfocusedBorderColor = BorderSubtleLight.copy(alpha = 0.4f)
-                    )
+                    colors = mandalTextFieldColors()
                 )
 
                 OutlinedTextField(
-                    value = interests,
-                    onValueChange = { interests = it },
-                    label = { Text("Interests & Hobbies (e.g. Kirtan, Quiz, Cricket)") },
-                    modifier = Modifier.fillMaxWidth(),
+                    value = skills,
+                    onValueChange = { skills = it },
+                    label = { Text("Skills & Mukhpath") },
+                    placeholder = { Text("e.g. Vachanamrut Mukhpath, Speech, Singing") },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .testTag("input_skills"),
                     singleLine = true,
                     shape = RoundedCornerShape(14.dp),
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor = SaffronPrimary,
-                        unfocusedBorderColor = BorderSubtleLight.copy(alpha = 0.4f)
-                    )
+                    colors = mandalTextFieldColors()
+                )
+
+                OutlinedTextField(
+                    value = assignedKaryakar,
+                    onValueChange = { assignedKaryakar = it },
+                    label = { Text("Assigned Karyakar") },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .testTag("input_assigned_karyakar"),
+                    singleLine = true,
+                    shape = RoundedCornerShape(14.dp),
+                    colors = mandalTextFieldColors()
                 )
 
                 OutlinedTextField(
                     value = notes,
                     onValueChange = { notes = it },
-                    label = { Text("Karyakar Notes & Observations") },
+                    label = { Text("Special Notes / Remarks") },
                     modifier = Modifier
                         .fillMaxWidth()
                         .testTag("input_notes"),
-                    maxLines = 3,
+                    minLines = 2,
+                    maxLines = 4,
                     shape = RoundedCornerShape(14.dp),
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor = SaffronPrimary,
-                        unfocusedBorderColor = BorderSubtleLight.copy(alpha = 0.4f)
-                    )
+                    colors = mandalTextFieldColors()
                 )
 
-                // Active toggle
+                // Active Status Switch
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.SpaceBetween
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
                     Column {
                         Text(
-                            text = "Active Balak Status",
+                            text = "Active Status",
                             style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.SemiBold)
                         )
                         Text(
-                            text = if (active) "Regularly attending sabha" else "Inactive / Temporarily relocated",
-                            style = MaterialTheme.typography.bodySmall.copy(color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            text = if (active) "Balak is actively attending" else "Balak is inactive / paused",
+                            style = MaterialTheme.typography.labelSmall.copy(color = if (active) PresentGreen else Color.Gray)
                         )
                     }
-
                     Switch(
                         checked = active,
                         onCheckedChange = { active = it },
-                        colors = SwitchDefaults.colors(checkedThumbColor = SaffronPrimary),
-                        modifier = Modifier.testTag("switch_active_status")
+                        colors = SwitchDefaults.colors(
+                            checkedThumbColor = SaffronPrimary,
+                            checkedTrackColor = SaffronPrimary.copy(alpha = 0.3f)
+                        ),
+                        modifier = Modifier.testTag("switch_active")
                     )
                 }
             }
         }
 
+        // Error message banner
         if (errorMessage != null) {
             Text(
                 text = errorMessage ?: "",
                 color = MaterialTheme.colorScheme.error,
-                style = MaterialTheme.typography.bodyMedium,
-                fontWeight = FontWeight.Bold
+                style = MaterialTheme.typography.bodySmall,
+                modifier = Modifier.padding(horizontal = 4.dp)
             )
         }
 
-        // Save & Delete Buttons
+        // Save & Action Buttons
         Button(
             onClick = {
                 if (firstName.isBlank()) {
-                    errorMessage = "Please enter First Name"
+                    errorMessage = "Please enter balak's first name."
+                } else if (lastName.isBlank()) {
+                    errorMessage = "Please enter balak's last name."
                 } else if (parentMobile.isBlank()) {
-                    errorMessage = "Please enter Parent Mobile Number"
+                    errorMessage = "Please enter parent's contact number."
                 } else {
                     val balakToSave = (initialBalak ?: Balak()).copy(
                         firstName = firstName.trim(),
@@ -512,10 +531,10 @@ fun AddEditBalakScreen(
                         address = address.trim(),
                         school = school.trim(),
                         bloodGroup = bloodGroup,
-                        notes = notes.trim(),
                         interests = interests.trim(),
                         skills = skills.trim(),
-                        assignedKaryakar = assignedKaryakar,
+                        assignedKaryakar = assignedKaryakar.trim(),
+                        notes = notes.trim(),
                         active = active
                     )
                     onSave(balakToSave)
@@ -523,37 +542,68 @@ fun AddEditBalakScreen(
             },
             modifier = Modifier
                 .fillMaxWidth()
-                .height(48.dp)
+                .heightIn(min = 50.dp)
                 .testTag("button_save_balak"),
             shape = RoundedCornerShape(16.dp),
-            colors = ButtonDefaults.buttonColors(containerColor = SaffronPrimary)
+            contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 14.dp, vertical = 10.dp),
+            colors = ButtonDefaults.buttonColors(
+                containerColor = SaffronPrimary,
+                contentColor = Color.White
+            )
         ) {
             Icon(Icons.Default.Check, contentDescription = null)
-            Spacer(modifier = Modifier.width(6.dp))
+            Spacer(modifier = Modifier.width(8.dp))
             Text(
-                text = if (isEditing) "Update Balak" else "Save Balak",
-                style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold, color = Color.White)
+                text = if (isEditing) "Save Changes" else "Register Balak",
+                fontSize = 14.sp,
+                fontWeight = FontWeight.Bold,
+                color = Color.White,
+                maxLines = 1
             )
         }
 
-        if (isEditing && onDelete != null) {
+        if (isEditing && onDelete != null && initialBalak != null) {
             OutlinedButton(
-                onClick = { onDelete(initialBalak.id) },
+                onClick = { showDeleteConfirm = true },
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(48.dp)
+                    .heightIn(min = 48.dp)
                     .testTag("button_delete_balak"),
                 shape = RoundedCornerShape(16.dp),
-                border = BorderStroke(1.dp, AbsentRed.copy(alpha = 0.5f)),
-                colors = ButtonDefaults.outlinedButtonColors(contentColor = AbsentRed)
+                contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 14.dp, vertical = 10.dp),
+                colors = ButtonDefaults.outlinedButtonColors(contentColor = AbsentRed),
+                border = BorderStroke(1.dp, AbsentRed.copy(alpha = 0.5f))
             ) {
-                Icon(Icons.Default.Delete, contentDescription = null, tint = AbsentRed, modifier = Modifier.size(18.dp))
-                Spacer(modifier = Modifier.width(6.dp))
-                Text("Delete / Remove Balak", color = AbsentRed, fontWeight = FontWeight.SemiBold)
+                Icon(Icons.Default.Delete, contentDescription = null, tint = AbsentRed)
+                Spacer(modifier = Modifier.width(8.dp))
+                Text("Delete Balak", color = AbsentRed, fontWeight = FontWeight.SemiBold, fontSize = 14.sp, maxLines = 1)
             }
         }
 
         Spacer(modifier = Modifier.height(24.dp))
     }
-}
 
+    if (showDeleteConfirm && initialBalak != null) {
+        AlertDialog(
+            onDismissRequest = { showDeleteConfirm = false },
+            title = { Text("Delete Balak Profile") },
+            text = { Text("Are you sure you want to delete ${initialBalak.fullName}? This action cannot be undone.") },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        showDeleteConfirm = false
+                        onDelete?.invoke(initialBalak.id)
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = AbsentRed)
+                ) {
+                    Text("Delete", color = Color.White)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDeleteConfirm = false }) {
+                    Text("Cancel")
+                }
+            }
+        )
+    }
+}

@@ -43,7 +43,7 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             MyApplicationTheme {
-                BalMandalApp()
+                BalMandalApp(activity = this@MainActivity)
             }
         }
     }
@@ -51,6 +51,7 @@ class MainActivity : ComponentActivity() {
 
 @Composable
 fun BalMandalApp(
+    activity: ComponentActivity? = null,
     viewModel: BalMandalViewModel = viewModel()
 ) {
     val currentScreen by viewModel.currentScreen.collectAsState()
@@ -94,8 +95,8 @@ fun BalMandalApp(
             onGoogleSignIn = { context ->
                 viewModel.signInWithGoogle(context)
             },
-            onSendPhoneCode = { activity, phone ->
-                viewModel.sendPhoneVerificationCode(activity, phone)
+            onSendPhoneCode = { act, phone ->
+                viewModel.sendPhoneVerificationCode(activity ?: act, phone)
             },
             onVerifyPhoneCode = { code ->
                 viewModel.verifyPhoneCode(code)
@@ -103,7 +104,7 @@ fun BalMandalApp(
             verificationId = verificationId,
             userMessage = userMessage
         )
-    } else if (currentUser?.isProfileComplete == false || currentScreen is Screen.Onboarding) {
+    } else if (currentScreen is Screen.Onboarding || (currentUser?.isProfileComplete == false && currentUser?.mandalName.isNullOrBlank())) {
         OnboardingScreen(
             currentUser = currentUser,
             onCompleteOnboarding = { name, phone, mandalName, mandalCity, role ->
@@ -255,6 +256,7 @@ fun BalMandalApp(
                             currentUser = currentUser,
                             onAddKaryakar = { viewModel.addKaryakar(it) },
                             onToggleKaryakarActive = { viewModel.toggleKaryakarActive(it) },
+                            onDeleteKaryakar = { viewModel.deleteKaryakar(it) },
                             isGujarati = isGujarati
                         )
                     }

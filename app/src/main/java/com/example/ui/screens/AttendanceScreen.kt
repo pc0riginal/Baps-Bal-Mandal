@@ -272,12 +272,7 @@ fun AttendanceScreen(
                 },
                 singleLine = true,
                 shape = RoundedCornerShape(100.dp),
-                colors = OutlinedTextFieldDefaults.colors(
-                    focusedBorderColor = SaffronPrimary,
-                    unfocusedBorderColor = BorderSubtleLight.copy(alpha = 0.5f),
-                    focusedContainerColor = MaterialTheme.colorScheme.surface,
-                    unfocusedContainerColor = MaterialTheme.colorScheme.surface
-                ),
+                colors = mandalTextFieldColors(),
                 modifier = Modifier
                     .weight(1f)
                     .height(48.dp)
@@ -288,11 +283,12 @@ fun AttendanceScreen(
                 onClick = { onMarkAll(AttendanceStatus.PRESENT) },
                 shape = RoundedCornerShape(100.dp),
                 border = BorderStroke(1.dp, BorderSubtleLight.copy(alpha = 0.5f)),
+                contentPadding = PaddingValues(horizontal = 10.dp, vertical = 6.dp),
                 modifier = Modifier
-                    .height(48.dp)
+                    .heightIn(min = 44.dp)
                     .testTag("button_mark_all_present")
             ) {
-                Text("All Present", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = PresentGreen)
+                Text("All Present", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = PresentGreen, maxLines = 1)
             }
         }
 
@@ -329,19 +325,20 @@ fun AttendanceScreen(
                 onClick = onSaveAttendance,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(52.dp)
+                    .heightIn(min = 50.dp)
                     .testTag("button_save_attendance"),
                 shape = RoundedCornerShape(24.dp),
+                contentPadding = PaddingValues(horizontal = 14.dp, vertical = 10.dp),
                 colors = ButtonDefaults.buttonColors(containerColor = SaffronPrimary)
             ) {
                 Icon(Icons.Default.Check, contentDescription = null)
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(
                     text = if (isGujarati) "હાજરી સાચવો ($presentCount હાજર)" else "Save Attendance ($presentCount Present)",
-                    style = MaterialTheme.typography.titleMedium.copy(
-                        fontWeight = FontWeight.Bold,
-                        color = Color.White
-                    )
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color.White,
+                    maxLines = 1
                 )
             }
         }

@@ -22,21 +22,14 @@ import androidx.compose.material.icons.filled.AccountCircle
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.LocationCity
 import androidx.compose.material.icons.filled.Phone
-import androidx.compose.material.icons.filled.Place
 import androidx.compose.material.icons.filled.TempleHindu
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.ExposedDropdownMenuBox
-import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.MenuAnchorType
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -56,12 +49,11 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.data.models.UserProfile
-import com.example.ui.theme.BorderSubtleLight
+import com.example.ui.components.mandalTextFieldColors
 import com.example.ui.theme.NavySecondary
 import com.example.ui.theme.SaffronDark
 import com.example.ui.theme.SaffronPrimary
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun OnboardingScreen(
     currentUser: UserProfile?,
@@ -72,15 +64,8 @@ fun OnboardingScreen(
     var phone by remember { mutableStateOf(currentUser?.phone ?: "") }
     var mandalName by remember { mutableStateOf(currentUser?.mandalName ?: "") }
     var mandalCity by remember { mutableStateOf(currentUser?.mandalCity ?: "") }
-    var selectedRole by remember { mutableStateOf(if (currentUser?.isAdmin == true) "admin" else "karyakar") }
-    var roleDropdownExpanded by remember { mutableStateOf(false) }
 
     var errorMessage by remember { mutableStateOf<String?>(null) }
-
-    val roles = listOf(
-        "karyakar" to "Bal Mandal Karyakar",
-        "admin" to "Sanchalak (Mandal Admin)"
-    )
 
     Box(
         modifier = modifier
@@ -189,10 +174,7 @@ fun OnboardingScreen(
                         keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Words),
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(14.dp),
-                        colors = OutlinedTextFieldDefaults.colors(
-                            focusedBorderColor = SaffronPrimary,
-                            unfocusedBorderColor = BorderSubtleLight.copy(alpha = 0.5f)
-                        )
+                        colors = mandalTextFieldColors(onWhiteCard = true)
                     )
 
                     Spacer(modifier = Modifier.height(14.dp))
@@ -213,10 +195,7 @@ fun OnboardingScreen(
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(14.dp),
-                        colors = OutlinedTextFieldDefaults.colors(
-                            focusedBorderColor = SaffronPrimary,
-                            unfocusedBorderColor = BorderSubtleLight.copy(alpha = 0.5f)
-                        )
+                        colors = mandalTextFieldColors(onWhiteCard = true)
                     )
 
                     Spacer(modifier = Modifier.height(14.dp))
@@ -237,10 +216,7 @@ fun OnboardingScreen(
                         keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Words),
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(14.dp),
-                        colors = OutlinedTextFieldDefaults.colors(
-                            focusedBorderColor = SaffronPrimary,
-                            unfocusedBorderColor = BorderSubtleLight.copy(alpha = 0.5f)
-                        )
+                        colors = mandalTextFieldColors(onWhiteCard = true)
                     )
 
                     Spacer(modifier = Modifier.height(14.dp))
@@ -261,15 +237,12 @@ fun OnboardingScreen(
                         keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Words),
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(14.dp),
-                        colors = OutlinedTextFieldDefaults.colors(
-                            focusedBorderColor = SaffronPrimary,
-                            unfocusedBorderColor = BorderSubtleLight.copy(alpha = 0.5f)
-                        )
+                        colors = mandalTextFieldColors(onWhiteCard = true)
                     )
 
                     Spacer(modifier = Modifier.height(14.dp))
 
-                    // 5. Role Display
+                    // 5. Role Display (Owner = Admin, others = Karyakar)
                     val isOwnerAdmin = currentUser?.isAdmin == true
                     OutlinedTextField(
                         value = if (isOwnerAdmin) "Sanchalak (Mandal Admin - DB Owner)" else "Bal Mandal Karyakar",
@@ -279,15 +252,13 @@ fun OnboardingScreen(
                         supportingText = {
                             Text(
                                 if (isOwnerAdmin) "Database Owner has Full Administrator privileges"
-                                else "Karyakar permissions (Admin privileges managed by Sanchalak)"
+                                else "Karyakar permissions (Admin privileges managed by Sanchalak)",
+                                color = Color(0xFF64748B)
                             )
                         },
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(14.dp),
-                        colors = OutlinedTextFieldDefaults.colors(
-                            focusedBorderColor = SaffronPrimary,
-                            unfocusedBorderColor = BorderSubtleLight.copy(alpha = 0.5f)
-                        )
+                        colors = mandalTextFieldColors(onWhiteCard = true)
                     )
 
                     if (errorMessage != null) {
@@ -319,30 +290,32 @@ fun OnboardingScreen(
                                 } else {
                                     "${mandalName.trim()} - ${mandalCity.trim()}"
                                 }
+                                val effectiveRole = if (isOwnerAdmin) "admin" else "karyakar"
                                 onCompleteOnboarding(
                                     name.trim(),
                                     phone.trim(),
                                     fullMandalDisplayName,
                                     mandalCity.trim(),
-                                    selectedRole
+                                    effectiveRole
                                 )
                             }
                         },
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(50.dp)
+                            .heightIn(min = 50.dp)
                             .testTag("button_complete_onboarding"),
                         shape = RoundedCornerShape(16.dp),
+                        contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 14.dp, vertical = 10.dp),
                         colors = ButtonDefaults.buttonColors(containerColor = SaffronPrimary)
                     ) {
                         Icon(Icons.Default.Check, contentDescription = null)
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(
                             text = "Save & Launch Dashboard",
-                            style = MaterialTheme.typography.titleMedium.copy(
-                                fontWeight = FontWeight.Bold,
-                                color = Color.White
-                            )
+                            fontSize = 14.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color.White,
+                            maxLines = 1
                         )
                     }
                 }

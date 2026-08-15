@@ -132,12 +132,7 @@ fun BalaksScreen(
                 },
                 singleLine = true,
                 shape = RoundedCornerShape(100.dp),
-                colors = OutlinedTextFieldDefaults.colors(
-                    focusedBorderColor = SaffronPrimary,
-                    unfocusedBorderColor = BorderSubtleLight.copy(alpha = 0.5f),
-                    focusedContainerColor = MaterialTheme.colorScheme.surface,
-                    unfocusedContainerColor = MaterialTheme.colorScheme.surface
-                ),
+                colors = mandalTextFieldColors(),
                 modifier = Modifier
                     .fillMaxWidth()
                     .testTag("balaks_search_input")

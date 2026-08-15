@@ -102,10 +102,10 @@ class BalMandalRepository private constructor() {
             phone = user.phoneNumber ?: "",
             role = if (isOwner) "admin" else "karyakar",
             mandalId = generatedMandalId,
-            mandalName = "",
+            mandalName = if (isOwner) "BAPS Bal Mandal" else "",
             mandalCity = "",
             active = true,
-            isProfileComplete = false
+            isProfileComplete = isOwner
         )
     }
 
@@ -114,6 +114,7 @@ class BalMandalRepository private constructor() {
         val defaultProfile = _currentUser.value ?: createDefaultUserProfile(user)
         val fs = firestore
         if (fs == null) {
+            _currentUser.value = defaultProfile.copy(isProfileComplete = true)
             startListeners()
             return
         }
@@ -123,20 +124,31 @@ class BalMandalRepository private constructor() {
                 if (doc != null && doc.exists()) {
                     val profile = doc.toObject(UserProfile::class.java)
                     if (profile != null) {
-                        // DB owner is always guaranteed Admin role
-                        val effectiveProfile = if (isOwner) profile.copy(role = "admin", active = true) else profile
+                        val isComplete = profile.isProfileComplete || profile.mandalName.isNotBlank() || isOwner
+                        val effectiveProfile = profile.copy(
+                            role = if (isOwner) "admin" else profile.role,
+                            isProfileComplete = isComplete,
+                            active = if (isOwner) true else profile.active,
+                            mandalName = if (profile.mandalName.isNotBlank()) profile.mandalName else if (isOwner) "BAPS Bal Mandal" else ""
+                        )
                         _currentUser.value = effectiveProfile
-                        if (effectiveProfile.isProfileComplete && effectiveProfile.active) {
+                        if (effectiveProfile.active) {
                             startListeners()
                         }
+                        return@addOnSuccessListener
                     }
-                } else {
-                    _currentUser.value = defaultProfile
+                }
+                _currentUser.value = defaultProfile
+                if (defaultProfile.active && defaultProfile.isProfileComplete) {
+                    startListeners()
                 }
             }
             .addOnFailureListener { e ->
                 Log.w("BalMandalRepo", "Firestore user profile read failed", e)
                 _currentUser.value = defaultProfile
+                if (defaultProfile.active && defaultProfile.isProfileComplete) {
+                    startListeners()
+                }
             }
     }
 
@@ -548,6 +560,14 @@ class BalMandalRepository private constructor() {
         // Also update users collection if the ID matches user's UID
         fs.collection("users").document(karyakarId).update("active", updated.active)
             .addOnFailureListener { e -> Log.w("BalMandalRepo", "User doc may not exist with same ID", e) }
+    }
+
+    fun deleteKaryakar(karyakarId: String) {
+        _karyakars.value = _karyakars.value.filter { it.id != karyakarId }
+        val fs = firestore ?: return
+        fs.collection("karyakars").document(karyakarId).delete()
+            .addOnSuccessListener { Log.d("BalMandalRepo", "Karyakar $karyakarId deleted from DB") }
+            .addOnFailureListener { e -> Log.e("BalMandalRepo", "Failed to delete karyakar from DB", e) }
     }
 }
 

@@ -432,6 +432,8 @@ fun MoreScreen(
                         onValueChange = { editName = it },
                         label = { Text("Full Name") },
                         singleLine = true,
+                        shape = RoundedCornerShape(14.dp),
+                        colors = mandalTextFieldColors(),
                         modifier = Modifier.fillMaxWidth()
                     )
                     OutlinedTextField(
@@ -439,6 +441,8 @@ fun MoreScreen(
                         onValueChange = { editPhone = it },
                         label = { Text("Mobile Number") },
                         singleLine = true,
+                        shape = RoundedCornerShape(14.dp),
+                        colors = mandalTextFieldColors(),
                         modifier = Modifier.fillMaxWidth()
                     )
                     OutlinedTextField(
@@ -446,6 +450,8 @@ fun MoreScreen(
                         onValueChange = { editMandalName = it },
                         label = { Text("Mandal / Mandir Name") },
                         singleLine = true,
+                        shape = RoundedCornerShape(14.dp),
+                        colors = mandalTextFieldColors(),
                         modifier = Modifier.fillMaxWidth()
                     )
                     OutlinedTextField(
@@ -453,6 +459,8 @@ fun MoreScreen(
                         onValueChange = { editCity = it },
                         label = { Text("City / Region") },
                         singleLine = true,
+                        shape = RoundedCornerShape(14.dp),
+                        colors = mandalTextFieldColors(),
                         modifier = Modifier.fillMaxWidth()
                     )
                 }

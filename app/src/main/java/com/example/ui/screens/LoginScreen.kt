@@ -36,7 +36,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -56,6 +55,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.ui.components.mandalTextFieldColors
 import com.example.ui.theme.BorderSubtleLight
 import com.example.ui.theme.NavySecondary
 import com.example.ui.theme.SaffronDark
@@ -193,7 +193,7 @@ fun LoginScreen(
                         Text(
                             text = "Sign in securely with your authorized BAPS Google account",
                             style = MaterialTheme.typography.bodySmall.copy(
-                                color = Color.Gray,
+                                color = Color(0xFF64748B),
                                 textAlign = TextAlign.Center
                             ),
                             modifier = Modifier.padding(top = 4.dp, bottom = 24.dp)
@@ -208,9 +208,10 @@ fun LoginScreen(
                             },
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .height(52.dp)
+                                .heightIn(min = 52.dp)
                                 .testTag("button_google_signin"),
                             shape = RoundedCornerShape(16.dp),
+                            contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 14.dp, vertical = 10.dp),
                             colors = ButtonDefaults.buttonColors(
                                 containerColor = SaffronPrimary,
                                 contentColor = Color.White
@@ -231,22 +232,22 @@ fun LoginScreen(
                                     Text(
                                         text = "G",
                                         fontWeight = FontWeight.Black,
-                                        fontSize = 20.sp,
+                                        fontSize = 18.sp,
                                         color = Color.White
                                     )
-                                    Spacer(modifier = Modifier.width(12.dp))
+                                    Spacer(modifier = Modifier.width(10.dp))
                                     Text(
                                         text = "Continue with Google SSO",
-                                        style = MaterialTheme.typography.titleMedium.copy(
-                                            fontWeight = FontWeight.Bold,
-                                            color = Color.White
-                                        )
+                                        fontSize = 14.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = Color.White,
+                                        maxLines = 1
                                     )
                                 }
                             }
                         }
 
-                        Spacer(modifier = Modifier.height(20.dp))
+                        Spacer(modifier = Modifier.height(18.dp))
 
                         Row(
                             modifier = Modifier.fillMaxWidth(),
@@ -255,13 +256,13 @@ fun LoginScreen(
                             HorizontalDivider(modifier = Modifier.weight(1f), color = BorderSubtleLight)
                             Text(
                                 text = "OR",
-                                style = MaterialTheme.typography.labelSmall.copy(color = Color.Gray),
+                                style = MaterialTheme.typography.labelSmall.copy(color = Color(0xFF64748B)),
                                 modifier = Modifier.padding(horizontal = 12.dp)
                             )
                             HorizontalDivider(modifier = Modifier.weight(1f), color = BorderSubtleLight)
                         }
 
-                        Spacer(modifier = Modifier.height(20.dp))
+                        Spacer(modifier = Modifier.height(18.dp))
 
                         // Switch to Phone OTP button
                         OutlinedButton(
@@ -271,9 +272,10 @@ fun LoginScreen(
                             },
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .height(48.dp)
+                                .heightIn(min = 48.dp)
                                 .testTag("button_phone_signin_mode"),
                             shape = RoundedCornerShape(16.dp),
+                            contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 14.dp, vertical = 10.dp),
                             border = BorderStroke(1.dp, SaffronPrimary.copy(alpha = 0.6f)),
                             colors = ButtonDefaults.outlinedButtonColors(contentColor = SaffronPrimary)
                         ) {
@@ -281,9 +283,9 @@ fun LoginScreen(
                             Spacer(modifier = Modifier.width(8.dp))
                             Text(
                                 text = "Sign In with Phone OTP",
-                                style = MaterialTheme.typography.titleMedium.copy(
-                                    fontWeight = FontWeight.SemiBold
-                                )
+                                fontSize = 14.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                maxLines = 1
                             )
                         }
                     } else {
@@ -317,8 +319,8 @@ fun LoginScreen(
 
                         if (verificationId == null) {
                             Text(
-                                text = "Enter your registered mobile number with country code (e.g. +91 9825012345 or +1...)",
-                                style = MaterialTheme.typography.bodySmall.copy(color = Color.Gray),
+                                text = "Enter your registered 10-digit mobile number with country code (e.g. +91 98250 12345)",
+                                style = MaterialTheme.typography.bodySmall.copy(color = Color(0xFF64748B)),
                                 modifier = Modifier.fillMaxWidth()
                             )
 
@@ -339,10 +341,7 @@ fun LoginScreen(
                                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
                                 modifier = Modifier.fillMaxWidth(),
                                 shape = RoundedCornerShape(14.dp),
-                                colors = OutlinedTextFieldDefaults.colors(
-                                    focusedBorderColor = SaffronPrimary,
-                                    unfocusedBorderColor = BorderSubtleLight.copy(alpha = 0.5f)
-                                )
+                                colors = mandalTextFieldColors(onWhiteCard = true)
                             )
 
                             Spacer(modifier = Modifier.height(20.dp))
@@ -351,7 +350,7 @@ fun LoginScreen(
                                 onClick = {
                                     val cleaned = phoneNumber.replace(" ", "").trim()
                                     if (cleaned.length < 8) {
-                                        errorMessage = "Please enter a valid mobile number with country code (e.g. +91...)"
+                                        errorMessage = "Please enter a valid mobile number with country code (e.g. +91 98250 12345)"
                                     } else {
                                         val activity = context.findActivity()
                                         if (activity != null) {
@@ -365,8 +364,9 @@ fun LoginScreen(
                                 },
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .height(48.dp),
+                                    .heightIn(min = 50.dp),
                                 shape = RoundedCornerShape(16.dp),
+                                contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 14.dp, vertical = 10.dp),
                                 colors = ButtonDefaults.buttonColors(containerColor = SaffronPrimary)
                             ) {
                                 if (isLoading) {
@@ -378,17 +378,17 @@ fun LoginScreen(
                                 } else {
                                     Text(
                                         text = "Send SMS OTP",
-                                        style = MaterialTheme.typography.titleMedium.copy(
-                                            fontWeight = FontWeight.Bold,
-                                            color = Color.White
-                                        )
+                                        fontSize = 14.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = Color.White,
+                                        maxLines = 1
                                     )
                                 }
                             }
                         } else {
                             Text(
                                 text = "A 6-digit verification code was sent to $phoneNumber",
-                                style = MaterialTheme.typography.bodySmall.copy(color = Color.Gray),
+                                style = MaterialTheme.typography.bodySmall.copy(color = Color(0xFF64748B)),
                                 modifier = Modifier.fillMaxWidth()
                             )
 
@@ -409,10 +409,7 @@ fun LoginScreen(
                                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                                 modifier = Modifier.fillMaxWidth(),
                                 shape = RoundedCornerShape(14.dp),
-                                colors = OutlinedTextFieldDefaults.colors(
-                                    focusedBorderColor = SaffronPrimary,
-                                    unfocusedBorderColor = BorderSubtleLight.copy(alpha = 0.5f)
-                                )
+                                colors = mandalTextFieldColors(onWhiteCard = true)
                             )
 
                             Spacer(modifier = Modifier.height(20.dp))
@@ -429,8 +426,9 @@ fun LoginScreen(
                                 },
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .height(48.dp),
+                                    .heightIn(min = 50.dp),
                                 shape = RoundedCornerShape(16.dp),
+                                contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 14.dp, vertical = 10.dp),
                                 colors = ButtonDefaults.buttonColors(containerColor = SaffronPrimary)
                             ) {
                                 if (isLoading) {
@@ -442,10 +440,10 @@ fun LoginScreen(
                                 } else {
                                     Text(
                                         text = "Verify OTP & Sign In",
-                                        style = MaterialTheme.typography.titleMedium.copy(
-                                            fontWeight = FontWeight.Bold,
-                                            color = Color.White
-                                        )
+                                        fontSize = 14.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = Color.White,
+                                        maxLines = 1
                                     )
                                 }
                             }

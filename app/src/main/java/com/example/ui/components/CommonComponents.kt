@@ -298,5 +298,31 @@ fun LowAttendanceAlertBanner(
     }
 }
 
+@Composable
+fun mandalTextFieldColors(
+    onWhiteCard: Boolean = false
+): androidx.compose.material3.TextFieldColors {
+    val textColor = if (onWhiteCard) Color(0xFF0F172A) else MaterialTheme.colorScheme.onSurface
+    val labelColor = if (onWhiteCard) Color(0xFF475569) else MaterialTheme.colorScheme.onSurfaceVariant
+    val placeholderColor = if (onWhiteCard) Color(0xFF94A3B8) else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
+
+    return androidx.compose.material3.OutlinedTextFieldDefaults.colors(
+        focusedTextColor = textColor,
+        unfocusedTextColor = textColor,
+        disabledTextColor = textColor.copy(alpha = 0.5f),
+        focusedLabelColor = SaffronPrimary,
+        unfocusedLabelColor = labelColor,
+        focusedBorderColor = SaffronPrimary,
+        unfocusedBorderColor = BorderSubtleLight.copy(alpha = 0.6f),
+        cursorColor = SaffronPrimary,
+        focusedPlaceholderColor = placeholderColor,
+        unfocusedPlaceholderColor = placeholderColor,
+        focusedLeadingIconColor = SaffronPrimary,
+        unfocusedLeadingIconColor = SaffronPrimary,
+        focusedTrailingIconColor = SaffronPrimary,
+        unfocusedTrailingIconColor = labelColor
+    )
+}
+
 private data class Quad<A, B, C, D>(val first: A, val second: B, val third: C, val fourth: D)
 

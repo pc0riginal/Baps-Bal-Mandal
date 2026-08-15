@@ -216,10 +216,7 @@ fun ActivitiesScreen(
                         singleLine = true,
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(14.dp),
-                        colors = OutlinedTextFieldDefaults.colors(
-                            focusedBorderColor = SaffronPrimary,
-                            unfocusedBorderColor = BorderSubtleLight.copy(alpha = 0.4f)
-                        )
+                        colors = mandalTextFieldColors()
                     )
                     OutlinedTextField(
                         value = category,
@@ -228,10 +225,7 @@ fun ActivitiesScreen(
                         singleLine = true,
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(14.dp),
-                        colors = OutlinedTextFieldDefaults.colors(
-                            focusedBorderColor = SaffronPrimary,
-                            unfocusedBorderColor = BorderSubtleLight.copy(alpha = 0.4f)
-                        )
+                        colors = mandalTextFieldColors()
                     )
                     OutlinedTextField(
                         value = date,
@@ -240,10 +234,7 @@ fun ActivitiesScreen(
                         singleLine = true,
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(14.dp),
-                        colors = OutlinedTextFieldDefaults.colors(
-                            focusedBorderColor = SaffronPrimary,
-                            unfocusedBorderColor = BorderSubtleLight.copy(alpha = 0.4f)
-                        )
+                        colors = mandalTextFieldColors()
                     )
                     OutlinedTextField(
                         value = description,
@@ -251,10 +242,7 @@ fun ActivitiesScreen(
                         label = { Text("Description") },
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(14.dp),
-                        colors = OutlinedTextFieldDefaults.colors(
-                            focusedBorderColor = SaffronPrimary,
-                            unfocusedBorderColor = BorderSubtleLight.copy(alpha = 0.4f)
-                        )
+                        colors = mandalTextFieldColors()
                     )
                     OutlinedTextField(
                         value = notes,
@@ -262,10 +250,7 @@ fun ActivitiesScreen(
                         label = { Text("Achievements / Winners Notes") },
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(14.dp),
-                        colors = OutlinedTextFieldDefaults.colors(
-                            focusedBorderColor = SaffronPrimary,
-                            unfocusedBorderColor = BorderSubtleLight.copy(alpha = 0.4f)
-                        )
+                        colors = mandalTextFieldColors()
                     )
                 }
             },

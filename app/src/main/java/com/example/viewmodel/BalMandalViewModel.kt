@@ -218,14 +218,24 @@ class BalMandalViewModel(
         }
     }
 
-    fun sendPhoneVerificationCode(activity: android.app.Activity, phoneNumber: String) {
+    fun sendPhoneVerificationCode(activity: android.app.Activity, rawPhoneNumber: String) {
+        val clean = rawPhoneNumber.replace(" ", "").replace("-", "").trim()
+        val normalized = when {
+            clean.startsWith("+") -> clean
+            clean.length == 10 -> "+91$clean"
+            clean.startsWith("0") && clean.length == 11 -> "+91${clean.substring(1)}"
+            else -> "+$clean"
+        }
+
+        android.util.Log.d("BalMandalAuth", "Sending phone verification to $normalized")
         val auth = com.google.firebase.auth.FirebaseAuth.getInstance()
         val options = com.google.firebase.auth.PhoneAuthOptions.newBuilder(auth)
-            .setPhoneNumber(phoneNumber)
+            .setPhoneNumber(normalized)
             .setTimeout(60L, java.util.concurrent.TimeUnit.SECONDS)
             .setActivity(activity)
             .setCallbacks(object : com.google.firebase.auth.PhoneAuthProvider.OnVerificationStateChangedCallbacks() {
                 override fun onVerificationCompleted(credential: com.google.firebase.auth.PhoneAuthCredential) {
+                    android.util.Log.d("BalMandalAuth", "Phone verification auto-completed")
                     repository.signInWithCredential(credential) { success, error ->
                         if (success) {
                             val user = repository.currentUser.value
@@ -242,12 +252,23 @@ class BalMandalViewModel(
                 }
 
                 override fun onVerificationFailed(e: com.google.firebase.FirebaseException) {
-                    _userMessage.value = "Phone verification failed: ${e.localizedMessage}"
+                    android.util.Log.e("BalMandalAuth", "Phone verification failed", e)
+                    val hint = when {
+                        e.message?.contains("app is not authorized", ignoreCase = true) == true ->
+                            "App not verified. Please verify SHA fingerprint in Firebase."
+                        e.message?.contains("quota", ignoreCase = true) == true ->
+                            "SMS quota exceeded. Please use Google SSO or a test number."
+                        e.message?.contains("format", ignoreCase = true) == true ->
+                            "Invalid phone format. Please enter format like +919825012345."
+                        else -> e.localizedMessage ?: "Verification failed"
+                    }
+                    _userMessage.value = "Phone verification failed: $hint"
                 }
 
                 override fun onCodeSent(verificationId: String, token: com.google.firebase.auth.PhoneAuthProvider.ForceResendingToken) {
+                    android.util.Log.d("BalMandalAuth", "Code sent successfully with id $verificationId")
                     _verificationId.value = verificationId
-                    _userMessage.value = "Code sent to $phoneNumber"
+                    _userMessage.value = "6-digit code sent to $normalized"
                 }
             })
             .build()
@@ -417,5 +438,11 @@ class BalMandalViewModel(
     fun toggleKaryakarActive(karyakarId: String) {
         repository.toggleKaryakarActive(karyakarId)
         _userMessage.value = "Karyakar status updated"
+    }
+
+    fun deleteKaryakar(karyakarId: String) {
+        val target = repository.karyakars.value.find { it.id == karyakarId }
+        repository.deleteKaryakar(karyakarId)
+        _userMessage.value = "Karyakar '${target?.name ?: ""}' deleted"
     }
 }

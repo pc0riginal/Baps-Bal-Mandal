@@ -3,7 +3,6 @@ package com.example.ui.screens
 import android.content.Intent
 import android.net.Uri
 import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -12,6 +11,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -21,6 +21,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.DeleteOutline
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Phone
 import androidx.compose.material.icons.filled.Shield
@@ -39,7 +40,6 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.MenuAnchorType
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
@@ -62,6 +62,8 @@ import androidx.compose.ui.unit.sp
 import com.example.data.models.Karyakar
 import com.example.data.models.UserProfile
 import com.example.ui.components.BalakAvatar
+import com.example.ui.components.mandalTextFieldColors
+import com.example.ui.theme.AbsentRed
 import com.example.ui.theme.BorderSubtleLight
 import com.example.ui.theme.NavySecondary
 import com.example.ui.theme.PresentGreen
@@ -74,11 +76,13 @@ fun KaryakarManagementScreen(
     currentUser: UserProfile?,
     onAddKaryakar: (Karyakar) -> Unit,
     onToggleKaryakarActive: (String) -> Unit,
+    onDeleteKaryakar: ((String) -> Unit)? = null,
     isGujarati: Boolean,
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
     var showAddDialog by remember { mutableStateOf(false) }
+    var karyakarToDelete by remember { mutableStateOf<Karyakar?>(null) }
     val isAdmin = currentUser?.isAdmin == true
 
     Scaffold(
@@ -140,7 +144,7 @@ fun KaryakarManagementScreen(
                         Icon(Icons.Default.Lock, contentDescription = null, tint = SaffronPrimary, modifier = Modifier.size(16.dp))
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(
-                            text = "Only the Mandal Admin (Database Owner) has permission to activate or deactivate karyakars.",
+                            text = "Only the Mandal Admin (Database Owner) has permission to add, activate, or delete karyakars.",
                             style = MaterialTheme.typography.bodySmall.copy(fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurface)
                         )
                     }
@@ -246,9 +250,19 @@ fun KaryakarManagementScreen(
                                                     data = Uri.parse("tel:${karyakar.phone}")
                                                 }
                                                 context.startActivity(intent)
-                                            }
+                                            },
+                                            modifier = Modifier.size(36.dp)
                                         ) {
                                             Icon(Icons.Default.Phone, contentDescription = "Call", tint = Color(0xFF2563EB), modifier = Modifier.size(18.dp))
+                                        }
+                                    }
+
+                                    if (isAdmin) {
+                                        IconButton(
+                                            onClick = { karyakarToDelete = karyakar },
+                                            modifier = Modifier.size(36.dp)
+                                        ) {
+                                            Icon(Icons.Default.DeleteOutline, contentDescription = "Delete Karyakar", tint = AbsentRed, modifier = Modifier.size(20.dp))
                                         }
                                     }
                                 }
@@ -296,6 +310,36 @@ fun KaryakarManagementScreen(
         }
     }
 
+    // Delete Confirmation Dialog
+    if (karyakarToDelete != null) {
+        val target = karyakarToDelete!!
+        AlertDialog(
+            onDismissRequest = { karyakarToDelete = null },
+            title = { Text("Delete Karyakar", fontWeight = FontWeight.Bold) },
+            text = { Text("Are you sure you want to remove ${target.name} from the Mandal team? This will delete their karyakar entry.") },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        val idToDelete = target.id
+                        karyakarToDelete = null
+                        onDeleteKaryakar?.invoke(idToDelete)
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = AbsentRed),
+                    shape = RoundedCornerShape(12.dp)
+                ) {
+                    Text("Delete", color = Color.White, fontWeight = FontWeight.Bold)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { karyakarToDelete = null }) {
+                    Text("Cancel")
+                }
+            },
+            shape = RoundedCornerShape(20.dp)
+        )
+    }
+
+    // Add Karyakar Dialog
     if (showAddDialog) {
         var name by remember { mutableStateOf("") }
         var email by remember { mutableStateOf("") }
@@ -316,10 +360,7 @@ fun KaryakarManagementScreen(
                         singleLine = true,
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(14.dp),
-                        colors = OutlinedTextFieldDefaults.colors(
-                            focusedBorderColor = SaffronPrimary,
-                            unfocusedBorderColor = BorderSubtleLight.copy(alpha = 0.4f)
-                        )
+                        colors = mandalTextFieldColors()
                     )
                     OutlinedTextField(
                         value = email,
@@ -328,10 +369,7 @@ fun KaryakarManagementScreen(
                         singleLine = true,
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(14.dp),
-                        colors = OutlinedTextFieldDefaults.colors(
-                            focusedBorderColor = SaffronPrimary,
-                            unfocusedBorderColor = BorderSubtleLight.copy(alpha = 0.4f)
-                        )
+                        colors = mandalTextFieldColors()
                     )
                     OutlinedTextField(
                         value = mobile,
@@ -340,10 +378,7 @@ fun KaryakarManagementScreen(
                         singleLine = true,
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(14.dp),
-                        colors = OutlinedTextFieldDefaults.colors(
-                            focusedBorderColor = SaffronPrimary,
-                            unfocusedBorderColor = BorderSubtleLight.copy(alpha = 0.4f)
-                        )
+                        colors = mandalTextFieldColors()
                     )
 
                     ExposedDropdownMenuBox(
@@ -358,10 +393,7 @@ fun KaryakarManagementScreen(
                             trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = roleDropdownExpanded) },
                             modifier = Modifier.menuAnchor(MenuAnchorType.PrimaryNotEditable).fillMaxWidth(),
                             shape = RoundedCornerShape(14.dp),
-                            colors = OutlinedTextFieldDefaults.colors(
-                                focusedBorderColor = SaffronPrimary,
-                                unfocusedBorderColor = BorderSubtleLight.copy(alpha = 0.4f)
-                            )
+                            colors = mandalTextFieldColors()
                         )
                         ExposedDropdownMenu(
                             expanded = roleDropdownExpanded,
@@ -386,10 +418,7 @@ fun KaryakarManagementScreen(
                         singleLine = true,
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(14.dp),
-                        colors = OutlinedTextFieldDefaults.colors(
-                            focusedBorderColor = SaffronPrimary,
-                            unfocusedBorderColor = BorderSubtleLight.copy(alpha = 0.4f)
-                        )
+                        colors = mandalTextFieldColors()
                     )
                 }
             },
@@ -399,21 +428,22 @@ fun KaryakarManagementScreen(
                         if (name.isNotBlank()) {
                             onAddKaryakar(
                                 Karyakar(
-                                    name = name,
-                                    email = email,
-                                    phone = mobile,
+                                    name = name.trim(),
+                                    email = email.trim(),
+                                    phone = mobile.trim(),
                                     role = role,
-                                    responsibilities = assignedStandard,
+                                    responsibilities = assignedStandard.trim(),
                                     active = true
                                 )
                             )
                             showAddDialog = false
                         }
                     },
-                    shape = RoundedCornerShape(16.dp),
+                    modifier = Modifier.heightIn(min = 44.dp),
+                    shape = RoundedCornerShape(14.dp),
                     colors = ButtonDefaults.buttonColors(containerColor = SaffronPrimary)
                 ) {
-                    Text("Add Karyakar", fontWeight = FontWeight.Bold)
+                    Text("Add Karyakar", fontWeight = FontWeight.Bold, fontSize = 14.sp)
                 }
             },
             dismissButton = {
