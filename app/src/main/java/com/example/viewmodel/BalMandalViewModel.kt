@@ -144,24 +144,15 @@ class BalMandalViewModel(
     fun signInWithGoogle(context: android.content.Context) {
         viewModelScope.launch {
             try {
-                val webClientId = com.example.BuildConfig.WEB_CLIENT_ID.takeIf {
-                    it.isNotBlank() && it != "YOUR_WEB_CLIENT_ID_HERE"
-                } ?: "928425397712-v7ei8p7b1selpi2k60dv0eu611j4gp3b.apps.googleusercontent.com"
-
-                val activity = context.findActivity() ?: (context as? android.app.Activity)
-                val targetContext = activity ?: context
-                val credentialManager = androidx.credentials.CredentialManager.create(targetContext)
+                val credentialManager = androidx.credentials.CredentialManager.create(context)
                 val request = androidx.credentials.GetCredentialRequest.Builder()
                     .addCredentialOption(
-                        com.google.android.libraries.identity.googleid.GetGoogleIdOption.Builder()
-                            .setFilterByAuthorizedAccounts(false)
-                            .setServerClientId(webClientId)
-                            .setAutoSelectEnabled(false)
+                        com.google.android.libraries.identity.googleid.GetSignInWithGoogleOption.Builder(com.example.BuildConfig.WEB_CLIENT_ID)
                             .build()
                     )
                     .build()
 
-                val result = credentialManager.getCredential(targetContext, request)
+                val result = credentialManager.getCredential(context, request)
                 val credential = result.credential
 
                 if (credential is androidx.credentials.CustomCredential && credential.type == com.google.android.libraries.identity.googleid.GoogleIdTokenCredential.TYPE_GOOGLE_ID_TOKEN_CREDENTIAL) {
@@ -177,8 +168,6 @@ class BalMandalViewModel(
                 } else {
                     _userMessage.value = "Unexpected credential type."
                 }
-            } catch (e: androidx.credentials.exceptions.GetCredentialCancellationException) {
-                // User cancelled the Google Sign-In prompt
             } catch (e: Exception) {
                 _userMessage.value = "Google Sign-In failed: ${e.localizedMessage}"
             }
@@ -387,10 +376,3 @@ class BalMandalViewModel(
         _userMessage.value = "Karyakar status updated"
     }
 }
-
-private tailrec fun android.content.Context.findActivity(): android.app.Activity? = when (this) {
-    is android.app.Activity -> this
-    is android.content.ContextWrapper -> baseContext.findActivity()
-    else -> null
-}
-
