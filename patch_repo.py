@@ -1,30 +1,55 @@
-with open('/app/src/main/java/com/example/data/repository/BalMandalRepository.kt', 'r') as f:
-    content = f.read()
-
 import re
 
-# Replace auth and firestore lazy init with try-catch nullable
-content = content.replace(
-    "private val auth: FirebaseAuth by lazy { FirebaseAuth.getInstance() }",
-    """private val auth: FirebaseAuth? by lazy {
-        try { FirebaseAuth.getInstance() } catch (e: Exception) { null }
-    }"""
-)
+with open('app/src/main/java/com/example/data/repository/BalMandalRepository.kt', 'r') as f:
+    content = f.read()
 
-content = content.replace(
-    "private val firestore: FirebaseFirestore by lazy { FirebaseFirestore.getInstance() }",
-    """private val firestore: FirebaseFirestore? by lazy {
-        try { FirebaseFirestore.getInstance() } catch (e: Exception) { null }
-    }"""
-)
+old_block = """                    firestore?.collection("users")?.document(user.uid)?.get()?.addOnSuccessListener { doc ->
+                        if (doc.exists()) {
+                            _currentUser.value = doc.toObject(UserProfile::class.java)
+                        } else {
+                            val newProfile = UserProfile(
+                                uid = user.uid,
+                                name = user.displayName ?: user.email?.substringBefore("@")?.replace(".", " ")?.capitalizeWords() ?: "Karyakar",
+                                email = user.email ?: "",
+                                role = "karyakar",
+                                mandalId = "mandal-001"
+                            )
+                            firestore?.collection("users")?.document(user.uid)?.set(newProfile)
+                            _currentUser.value = newProfile
+                        }
+                        startListeners()
+                    }"""
 
-# Replace auth usages
-content = content.replace("auth.addAuthStateListener", "auth?.addAuthStateListener")
-content = content.replace("auth.signInWithEmailAndPassword", "auth?.signInWithEmailAndPassword")
-content = content.replace("auth.signOut", "auth?.signOut")
+new_block = """                    val fallbackProfile = UserProfile(
+                        uid = user.uid,
+                        name = user.displayName ?: user.email?.substringBefore("@")?.replace(".", " ")?.capitalizeWords() ?: "Karyakar",
+                        email = user.email ?: "",
+                        role = "karyakar",
+                        mandalId = "mandal-001"
+                    )
+                    val task = firestore?.collection("users")?.document(user.uid)?.get()
+                    if (task != null) {
+                        task.addOnSuccessListener { doc ->
+                            if (doc.exists()) {
+                                _currentUser.value = doc.toObject(UserProfile::class.java)
+                            } else {
+                                firestore.collection("users").document(user.uid).set(fallbackProfile)
+                                _currentUser.value = fallbackProfile
+                            }
+                            startListeners()
+                        }.addOnFailureListener {
+                            _currentUser.value = fallbackProfile
+                            startListeners()
+                        }
+                    } else {
+                        _currentUser.value = fallbackProfile
+                        startListeners()
+                    }"""
 
-# Replace firestore usages with firestore?
-content = content.replace("firestore.collection", "firestore?.collection")
-content = content.replace("firestore.batch()", "firestore?.batch()")
-# Wait, batch() returns WriteBatch? so we need to handle that.
-# Actually, I'll rewrite the file safely.
+if old_block in content:
+    content = content.replace(old_block, new_block)
+    with open('app/src/main/java/com/example/data/repository/BalMandalRepository.kt', 'w') as f:
+        f.write(content)
+    print("Patched successfully")
+else:
+    print("Old block not found")

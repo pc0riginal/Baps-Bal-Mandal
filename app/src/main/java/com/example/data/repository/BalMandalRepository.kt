@@ -44,20 +44,29 @@ class BalMandalRepository private constructor() {
             auth?.addAuthStateListener { firebaseAuth ->
                 val user = firebaseAuth.currentUser
                 if (user != null) {
-                    firestore?.collection("users")?.document(user.uid)?.get()?.addOnSuccessListener { doc ->
-                        if (doc.exists()) {
-                            _currentUser.value = doc.toObject(UserProfile::class.java)
-                        } else {
-                            val newProfile = UserProfile(
-                                uid = user.uid,
-                                name = user.displayName ?: user.email?.substringBefore("@")?.replace(".", " ")?.capitalizeWords() ?: "Karyakar",
-                                email = user.email ?: "",
-                                role = "karyakar",
-                                mandalId = "mandal-001"
-                            )
-                            firestore?.collection("users")?.document(user.uid)?.set(newProfile)
-                            _currentUser.value = newProfile
+                    val fallbackProfile = UserProfile(
+                        uid = user.uid,
+                        name = user.displayName ?: user.email?.substringBefore("@")?.replace(".", " ")?.capitalizeWords() ?: "Karyakar",
+                        email = user.email ?: "",
+                        role = "karyakar",
+                        mandalId = "mandal-001"
+                    )
+                    val task = firestore?.collection("users")?.document(user.uid)?.get()
+                    if (task != null) {
+                        task.addOnSuccessListener { doc ->
+                            if (doc.exists()) {
+                                _currentUser.value = doc.toObject(UserProfile::class.java)
+                            } else {
+                                firestore?.collection("users")?.document(user.uid)?.set(fallbackProfile)
+                                _currentUser.value = fallbackProfile
+                            }
+                            startListeners()
+                        }.addOnFailureListener {
+                            _currentUser.value = fallbackProfile
+                            startListeners()
                         }
+                    } else {
+                        _currentUser.value = fallbackProfile
                         startListeners()
                     }
                 } else {
