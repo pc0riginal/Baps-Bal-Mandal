@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:aapt="http://schemas.android.com/aapt"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    
+    <!-- Outer auspicious glow base -->
+    <path
+        android:pathData="M32,68 C32,77 42,80 54,80 C66,80 76,77 76,68 C76,66 32,66 32,68 Z"
+        android:fillColor="#FFE082" />
+        
+    <!-- Diya Bowl -->
+    <path
+        android:pathData="M30,64 C30,73 40,77 54,77 C68,77 78,73 78,64 L80,60 C80,59 78,59 76,60 C68,63 62,64 54,64 C46,64 40,63 32,60 C30,59 28,59 28,60 Z">
+        <aapt:attr name="android:fillColor">
+            <gradient
+                android:startX="30"
+                android:startY="60"
+                android:endX="78"
+                android:endY="77"
+                android:type="linear">
+                <item android:color="#FFFFFF" android:offset="0.0" />
+                <item android:color="#FFF8E1" android:offset="0.4" />
+                <item android:color="#FFECB3" android:offset="1.0" />
+            </gradient>
+        </aapt:attr>
+    </path>
+    
+    <!-- Outer Sacred Flame -->
+    <path
+        android:pathData="M54,24 C50,33 42,42 42,51 C42,58 47.5,63 54,63 C60.5,63 66,58 66,51 C66,42 58,33 54,24 Z">
+        <aapt:attr name="android:fillColor">
+            <gradient
+                android:startX="54"
+                android:startY="24"
+                android:endX="54"
+                android:endY="63"
+                android:type="linear">
+                <item android:color="#FFFFFF" android:offset="0.0" />
+                <item android:color="#FFF3E0" android:offset="0.3" />
+                <item android:color="#FFD54F" android:offset="0.7" />
+                <item android:color="#FF9800" android:offset="1.0" />
+            </gradient>
+        </aapt:attr>
+    </path>
+
+    <!-- Inner Golden Flame Core -->
+    <path
+        android:pathData="M54,34 C52,40 47,46 47,52 C47,56 50,59 54,59 C58,59 61,56 61,52 C61,46 56,40 54,34 Z">
+        <aapt:attr name="android:fillColor">
+            <gradient
+                android:startX="54"
+                android:startY="34"
+                android:endX="54"
+                android:endY="59"
+                android:type="linear">
+                <item android:color="#FFFFFF" android:offset="0.0" />
+                <item android:color="#FFF9C4" android:offset="0.5" />
+                <item android:color="#FFCA28" android:offset="1.0" />
+            </gradient>
+        </aapt:attr>
+    </path>
+</vector>

@@ -1,0 +1,29 @@
+<resources>
+    <string name="app_name">BAPS Bal Mandal</string>
+    <string name="nav_home">Home</string>
+    <string name="nav_balaks">Balaks</string>
+    <string name="nav_attendance">Attendance</string>
+    <string name="nav_reports">Reports</string>
+    <string name="nav_more">More</string>
+    <string name="login_title">BAPS Bal Mandal</string>
+    <string name="login_subtitle">Karyakar Management Portal</string>
+    <string name="email_label">Email Address</string>
+    <string name="password_label">Password</string>
+    <string name="btn_login">Sign In</string>
+    <string name="btn_logout">Logout</string>
+    <string name="total_balaks">Total Balaks</string>
+    <string name="present_today">Present Today</string>
+    <string name="avg_attendance">Avg Attendance</string>
+    <string name="new_balaks">New Balaks</string>
+    <string name="quick_actions">Quick Actions</string>
+    <string name="add_balak">Add Balak</string>
+    <string name="mark_attendance">Mark Attendance</string>
+    <string name="view_balaks">View Balaks</string>
+    <string name="upcoming_sabha">Upcoming Sabha</string>
+    <string name="search_balak_hint">Search by name, ID, parent, phone...</string>
+    <string name="save_attendance">Save Attendance</string>
+    <string name="present">Present</string>
+    <string name="absent">Absent</string>
+    <string name="late">Late</string>
+    <string name="excused">Excused</string>
+</resources>

@@ -1,0 +1,6 @@
+{
+  "name": "BAPS Bal Mandal",
+  "description": "BAPS Bal Mandal management application for karyakars to manage balaks, attendance, sabhas, activities, and reports.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
