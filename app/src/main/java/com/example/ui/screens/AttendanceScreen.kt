@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -63,6 +64,7 @@ import com.example.data.models.AttendanceStatus
 import com.example.data.models.Balak
 import com.example.data.models.SabhaSession
 import com.example.ui.components.BalakAvatar
+import com.example.ui.components.mandalTextFieldColors
 import com.example.ui.theme.AbsentRed
 import com.example.ui.theme.AbsentRedBg
 import com.example.ui.theme.BorderSubtleLight
@@ -460,4 +462,3 @@ private fun StatusButton(
         )
     }
 }
-

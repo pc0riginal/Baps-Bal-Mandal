@@ -47,6 +47,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.data.models.MandalActivity
+import com.example.ui.components.mandalTextFieldColors
 import com.example.ui.theme.BorderSubtleLight
 import com.example.ui.theme.SaffronPrimary
 
@@ -285,4 +286,3 @@ fun ActivitiesScreen(
         )
     }
 }
-
